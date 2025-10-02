@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------
-#  ink/CMakeLists.txt  —— 等价于 MODULE.bazel 的顶层描述
+#  ink_native/CMakeLists.txt  —— 等价于 MODULE.bazel 的顶层描述
 # ------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.20)
 project(ink
@@ -46,6 +46,11 @@ ink_fetch_git(ink_stroke_modeler
   https://github.com/google/ink-stroke-modeler.git
   2cd45e8683025c28fa2efcf672ad46607e8af869   # 2025-08-28
 )
+FetchContent_GetProperties(ink_stroke_modeler)
+if(NOT ink_stroke_modeler_POPULATED)
+  FetchContent_Populate(ink_stroke_modeler)
+endif()
+include_directories(${ink_stroke_modeler_SOURCE_DIR})
 
 #ink_fetch_git(libtess2
 #  https://github.com/memononen/libtess2.git
@@ -116,10 +121,10 @@ endif()
 
 # ------------------------------------------------------------------ 递归子目录
 
-add_subdirectory(ink/brush)
 add_subdirectory(ink/types)
 add_subdirectory(ink/color)
 add_subdirectory(ink/geometry)
+add_subdirectory(ink/brush)
 add_subdirectory(ink/strokes)
 
 # 后续可以继续 add_subdirectory(stroke) / add_subdirectory(geometry) ...

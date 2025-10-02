@@ -64,6 +64,7 @@ target_link_libraries(ink_strokes_internal_stroke_outline
     absl::span
 )
 add_library(ink::strokes::internal::stroke_outline ALIAS ink_strokes_internal_stroke_outline)
+target_include_directories(ink_strokes_internal_stroke_outline PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 ## extrusion_points
 add_library(ink_strokes_internal_extrusion_points INTERFACE)

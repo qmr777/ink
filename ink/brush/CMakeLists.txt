@@ -36,6 +36,7 @@ target_link_libraries(ink_brush_tip
     absl::str_format
 )
 add_library(ink::brush_tip ALIAS ink_brush_tip)
+target_include_directories(ink_brush_tip PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 # easing_function
 add_library(ink_easing_function STATIC

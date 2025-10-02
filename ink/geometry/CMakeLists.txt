@@ -6,12 +6,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 沿用顶层选项
-#if(NOT DEFINED INK_BUILD_TESTS)
-#  set(INK_BUILD_TESTS ON)
-#endif()
-#if(NOT DEFINED INK_BUILD_BENCHMARKS)
-#  set(INK_BUILD_BENCHMARKS ON)
-#endif()
+if(NOT DEFINED INK_BUILD_TESTS)
+  set(INK_BUILD_TESTS OFF)
+endif()
+if(NOT DEFINED INK_BUILD_BENCHMARKS)
+  set(INK_BUILD_BENCHMARKS OFF)
+endif()
 
 add_subdirectory(internal)
 
@@ -39,6 +39,7 @@ target_link_libraries(ink_geometry_angle
     absl::str_format
 )
 add_library(ink::geometry_angle ALIAS ink_geometry_angle)
+target_include_directories(ink_geometry_angle PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 ## vec
 add_library(ink_geometry_vec STATIC
@@ -221,6 +222,7 @@ target_link_libraries(ink_geometry_mesh_packing_types
     absl::str_format
 )
 add_library(ink::geometry_mesh_packing_types ALIAS ink_geometry_mesh_packing_types)
+target_include_directories(ink_geometry_mesh_packing_types PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 ## mutable_mesh
 add_library(ink_geometry_mutable_mesh STATIC

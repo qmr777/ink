@@ -53,6 +53,7 @@ target_link_libraries(ink_types_physical_distance
     absl::strings
 )
 add_library(ink::types_physical_distance ALIAS ink_types_physical_distance)
+target_include_directories(ink_types_physical_distance PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 ## duration
 add_library(ink_types_duration STATIC
@@ -64,6 +65,7 @@ target_link_libraries(ink_types_duration
     absl::time
 )
 add_library(ink::types_duration ALIAS ink_types_duration)
+target_include_directories(ink_types_duration PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
 
 # ------------------------------------------------------------------ 测试专用库
 #if(INK_BUILD_TESTS)
