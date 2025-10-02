@@ -64,7 +64,7 @@ target_link_libraries(ink_strokes_internal_stroke_outline
     absl::span
 )
 add_library(ink::strokes::internal::stroke_outline ALIAS ink_strokes_internal_stroke_outline)
-target_include_directories(ink_strokes_internal_stroke_outline PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_strokes_internal_stroke_outline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 
 ## extrusion_points
 add_library(ink_strokes_internal_extrusion_points INTERFACE)
@@ -124,6 +124,7 @@ add_library(ink_strokes_internal_stroke_input_modeler STATIC
   stroke_input_modeler/sliding_window_input_modeler.h
   stroke_input_modeler/spring_based_input_modeler.h
 )
+
 target_link_libraries(ink_strokes_internal_stroke_input_modeler
   PUBLIC
     ink::brush_family
@@ -144,6 +145,10 @@ target_link_libraries(ink_strokes_internal_stroke_input_modeler
     InkStrokeModeler::params
     InkStrokeModeler::stroke_modeler
     InkStrokeModeler::types
+)
+target_include_directories(ink_strokes_internal_stroke_input_modeler
+        PUBLIC
+        ${ink_stroke_modeler_SOURCE_DIR}
 )
 add_library(ink::strokes::internal::stroke_input_modeler ALIAS ink_strokes_internal_stroke_input_modeler)
 

@@ -30,8 +30,6 @@
 #include "ink/strokes/input/stroke_input_batch.h"
 #include "ink/types/duration.h"
 #include "ink/types/physical_distance.h"
-#include "ink_stroke_modeler/stroke_modeler.h"
-#include "ink_stroke_modeler/types.h"
 
 namespace ink::strokes_internal {
 

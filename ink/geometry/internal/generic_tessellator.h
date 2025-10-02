@@ -24,7 +24,7 @@
 #include "absl/base/attributes.h"
 #include "absl/log/absl_check.h"
 #include "absl/types/span.h"
-#include "libtess2/tesselator.h"
+#include "tesselator.h"
 
 namespace ink::geometry_internal {
 

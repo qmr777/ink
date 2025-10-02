@@ -126,8 +126,81 @@ add_subdirectory(ink/color)
 add_subdirectory(ink/geometry)
 add_subdirectory(ink/brush)
 add_subdirectory(ink/strokes)
-
 # 后续可以继续 add_subdirectory(stroke) / add_subdirectory(geometry) ...
+
+# ---------------------------------------------------------------------------
+#  统一导出目标 —— 对外只暴露 ink::ink
+# ---------------------------------------------------------------------------
+add_library(ink INTERFACE)
+
+# 1. 把头文件根目录甩出去
+target_include_directories(ink INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
+
+# 2. 把内部所有子库一次性链接进来
+#    下面这些名字全是子目录里已经存在的 ALIAS 或真实目标
+target_link_libraries(ink INTERFACE
+        ink::color
+        ink::color_function
+        ink::color_space
+
+        ink::types_duration
+        ink::types_internal::copy_on_write
+        ink::types_internal::float
+        ink::types_iterator_range
+        ink::types_numbers
+        ink::types_physical_distance
+        ink::types_small_array
+
+        ink::easing_function
+
+        ink::geometry_angle
+        ink::geometry_vec
+        ink::geometry_point
+        ink::geometry_segment
+        ink::geometry_rect
+        ink::geometry_triangle
+        ink::geometry_quad
+        ink::geometry_envelope
+        ink::geometry_affine_transform
+        ink::geometry_intersects
+        ink::geometry_distance
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_mesh_packing_types
+        ink::geometry_mutable_mesh
+        ink::geometry_partitioned_mesh
+        ink::geometry_convex_hull
+        ink::geometry_tessellator
+
+        ink::geometry_internal::modulo
+        ink::geometry_internal::algorithms
+        ink::geometry_internal::intersects_internal
+        ink::geometry_internal::mesh_constants
+        ink::geometry_internal::mesh_packing
+        ink::geometry_internal::static_rtree
+        ink::geometry_internal::convex_hull_helper
+        ink::geometry_internal::point_tessellation_helper
+        ink::geometry_internal::generic_tessellator
+        ink::geometry_internal::polyline_processing
+
+
+        ink::strokes::in_progress_stroke
+        ink::strokes::stroke
+
+        ink::strokes::internal::brush_tip_state
+        ink::strokes::internal::rounded_polygon
+        ink::strokes::internal::stroke_input_modeler
+        ink::strokes::internal::stroke_shape_builder
+        ink::strokes::internal::stroke_shape_update
+        ink::strokes::internal::stroke_vertex
+        ink::strokes::internal::constrain_brush_tip_extrusion
+
+        ink::strokes::input::stroke_input
+        ink::strokes::input::stroke_input_batch
+        ink::strokes::input::internal::stroke_input_validation_helpers
+)
 
 # 禁止 re2 安装导出，避免 CMP0002 报错
 set(RE2_BUILD_TESTING OFF CACHE BOOL "" FORCE)

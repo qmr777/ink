@@ -39,7 +39,7 @@ target_link_libraries(ink_geometry_angle
     absl::str_format
 )
 add_library(ink::geometry_angle ALIAS ink_geometry_angle)
-target_include_directories(ink_geometry_angle PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_geometry_angle PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 ## vec
 add_library(ink_geometry_vec STATIC
@@ -204,6 +204,7 @@ target_link_libraries(ink_geometry_mesh_format
     absl::span
 )
 add_library(ink::geometry_mesh_format ALIAS ink_geometry_mesh_format)
+target_include_directories(ink_geometry_mesh_format PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 ## mesh_index_types
 add_library(ink_geometry_mesh_index_types INTERFACE)
@@ -222,7 +223,7 @@ target_link_libraries(ink_geometry_mesh_packing_types
     absl::str_format
 )
 add_library(ink::geometry_mesh_packing_types ALIAS ink_geometry_mesh_packing_types)
-target_include_directories(ink_geometry_mesh_packing_types PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_geometry_mesh_packing_types PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 ## mutable_mesh
 add_library(ink_geometry_mutable_mesh STATIC

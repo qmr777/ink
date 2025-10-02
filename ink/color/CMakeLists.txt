@@ -31,7 +31,7 @@ target_link_libraries(ink_color_space
     absl::str_format
 )
 add_library(ink::color_space ALIAS ink_color_space)
-target_include_directories(ink_color_space PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_color_space PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 # ------------------------------------------------------------------ color
 add_library(ink_color STATIC
@@ -46,4 +46,4 @@ target_link_libraries(ink_color
     absl::str_format
 )
 add_library(ink::color ALIAS ink_color)
-target_include_directories(ink_color PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_color PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")

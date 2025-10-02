@@ -30,7 +30,10 @@ target_link_libraries(ink_geometry_internal_modulo
     absl::check
 )
 add_library(ink::geometry_internal::modulo ALIAS ink_geometry_internal_modulo)
-target_include_directories(ink_geometry_internal_modulo PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_geometry_internal_modulo
+        PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../..>"
+)
 
 ## mesh_constants
 add_library(ink_geometry_internal_mesh_constants INTERFACE)
@@ -38,7 +41,7 @@ target_include_directories(ink_geometry_internal_mesh_constants INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_library(ink::geometry_internal::mesh_constants ALIAS ink_geometry_internal_mesh_constants)
-target_include_directories(ink_geometry_internal_mesh_constants INTERFACE "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>")
+target_include_directories(ink_geometry_internal_mesh_constants INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../..>")
 
 ## legacy_vector_utils
 add_library(ink_geometry_internal_legacy_vector_utils STATIC
