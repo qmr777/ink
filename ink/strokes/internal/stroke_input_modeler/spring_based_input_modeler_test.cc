@@ -25,6 +25,7 @@
 #include "ink/geometry/type_matchers.h"
 #include "ink/strokes/input/stroke_input.h"
 #include "ink/strokes/input/stroke_input_batch.h"
+#include "ink/strokes/internal/stroke_input_modeler.h"
 #include "ink/strokes/internal/type_matchers.h"
 #include "ink/types/duration.h"
 #include "ink/types/physical_distance.h"
@@ -33,12 +34,7 @@
 namespace ink::strokes_internal {
 namespace {
 
-using ::testing::AllOf;
 using ::testing::ElementsAre;
-using ::testing::ExplainMatchResult;
-using ::testing::Field;
-using ::testing::FloatNear;
-using ::testing::Optional;
 
 // Returns a vector of single-input `StrokeInputBatch` that can be used for a
 // single synthetic stroke.
@@ -107,10 +103,9 @@ MATCHER_P(PositionsAreSeparatedByAtLeast, min_distance, "") {
 TEST(SpringBasedInputModelerTest, LargeBrushEpsilonIsRespected) {
   std::vector<StrokeInputBatch> input_batches = MakeStylusInputBatchSequence();
 
-  SpringBasedInputModeler modeler(
-      SpringBasedInputModeler::Version::kSpringModel);
+  StrokeInputModeler modeler;
   float brush_epsilon = 3;
-  modeler.StartStroke(brush_epsilon);
+  modeler.StartStroke(BrushFamily::SpringModel{}, brush_epsilon);
 
   modeler.ExtendStroke(input_batches[0], input_batches[1], Duration32::Zero());
   modeler.ExtendStroke(input_batches[1], input_batches[2], Duration32::Zero());
@@ -118,20 +113,6 @@ TEST(SpringBasedInputModelerTest, LargeBrushEpsilonIsRespected) {
   modeler.ExtendStroke(input_batches[3], input_batches[4], Duration32::Zero());
   EXPECT_THAT(modeler.GetModeledInputs(),
               PositionsAreSeparatedByAtLeast(brush_epsilon));
-}
-
-TEST(SpringBasedInputModelerDeathTest, ExtendWithoutStart) {
-  SpringBasedInputModeler modeler(
-      SpringBasedInputModeler::Version::kSpringModel);
-  EXPECT_DEATH_IF_SUPPORTED(modeler.ExtendStroke({}, {}, Duration32::Zero()),
-                            "`StartStroke\\(\\)` has not been called\\.");
-}
-
-TEST(SpringBasedInputModelerDeathTest, StartWithZeroEpsilon) {
-  SpringBasedInputModeler modeler(
-      SpringBasedInputModeler::Version::kSpringModel);
-  EXPECT_DEATH_IF_SUPPORTED(modeler.StartStroke(/* brush_epsilon = */ 0),
-                            "brush_epsilon");
 }
 
 }  // namespace
