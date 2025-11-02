@@ -23,8 +23,6 @@
 #include "absl/status/statusor.h"
 #include "absl/types/span.h"
 #include "ink/geometry/angle.h"
-#include "ink/geometry/point.h"
-#include "ink/geometry/rect.h"
 #include "ink/storage/numeric_run.h"
 #include "ink/storage/proto/stroke_input_batch.pb.h"
 #include "ink/strokes/input/fuzz_domains.h"
@@ -397,12 +395,25 @@ void StrokeInputBatchRoundTrip(const StrokeInputBatch& inputs) {
   EXPECT_EQ(decoded->GetNoiseSeed(), inputs.GetNoiseSeed());
 }
 FUZZ_TEST(StrokeInputBatchFuzzTest, StrokeInputBatchRoundTrip)
-    // TODO: b/349965543 - Currently, extreme input position values sometimes
-    // get quantized to infinity on encoding, and then don't decode
-    // successfully. Once that gets fixed, change this to use
-    // `ArbitraryStrokeInputBatch()`.
-    .WithDomains(StrokeInputBatchInRect(
-        Rect::FromCenterAndDimensions(kOrigin, 1e30f, 1e30f)));
+    .WithDomains(ArbitraryStrokeInputBatch());
 
+void EncodeDecodeRoundtripIsIdempotent(const StrokeInputBatch& input) {
+  CodedStrokeInputBatch proto;
+  EncodeStrokeInputBatch(input, proto);
+  absl::StatusOr<StrokeInputBatch> first_roundtrip =
+      DecodeStrokeInputBatch(proto);
+  ASSERT_EQ(first_roundtrip.status(), absl::OkStatus());
+
+  // While the first encoding may be lossy, the subsequent encoding/decoding
+  // roundtrips should stabilize.
+
+  EncodeStrokeInputBatch(*first_roundtrip, proto);
+  absl::StatusOr<StrokeInputBatch> second_roundtrip =
+      DecodeStrokeInputBatch(proto);
+  ASSERT_EQ(second_roundtrip.status(), absl::OkStatus());
+  EXPECT_THAT(*first_roundtrip, StrokeInputBatchEq(*second_roundtrip));
+}
+FUZZ_TEST(StrokeInputBatchFuzzTest, EncodeDecodeRoundtripIsIdempotent)
+    .WithDomains(ArbitraryStrokeInputBatch());
 }  // namespace
 }  // namespace ink

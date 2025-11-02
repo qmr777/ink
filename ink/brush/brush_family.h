@@ -43,11 +43,6 @@ class BrushFamily {
   // existing strokes.
   struct SpringModel {};
 
-  // Model that attempts to preserve input positions as closely as possible.
-  // This is an experimental configuration which may be adjusted or removed
-  // later.
-  struct ExperimentalRawPositionModel {};
-
   // A naive model that passes through raw inputs mostly unchanged.  This is an
   // experimental configuration which may be adjusted or removed later.
   struct ExperimentalNaiveModel {};
@@ -59,14 +54,13 @@ class BrushFamily {
   // removed later.
   struct SlidingWindowModel {
     // The duration over which to average together nearby raw inputs. Typically
-    // this should be somewhere in the 1 ms to 100 ms range, with 20 ms being a
-    // reasonable default.
-    Duration32 window_size;
+    // this should be somewhere in the 1 ms to 100 ms range.
+    Duration32 window_size = Duration32::Millis(20);
     // The maximum duration between modeled inputs; if raw inputs are spaced
     // more than this far apart in time, then additional modeled inputs will be
     // inserted between them. Set this to `Duration32::Infinite()` to disable
     // upsampling.
-    Duration32 upsampling_period;
+    Duration32 upsampling_period = Duration32::Seconds(1.0 / 180.0);
   };
 
   // Specifies a model for turning a sequence of raw hardware inputs (e.g. from
@@ -74,8 +68,8 @@ class BrushFamily {
   // inputs. Raw hardware inputs tend to be noisy, and must be smoothed before
   // being passed into a brush's behaviors and extruded into a mesh in order to
   // get a good-looking stroke.
-  using InputModel = std::variant<SpringModel, ExperimentalRawPositionModel,
-                                  ExperimentalNaiveModel, SlidingWindowModel>;
+  using InputModel =
+      std::variant<SpringModel, ExperimentalNaiveModel, SlidingWindowModel>;
 
   // LINT.ThenChange(../strokes/internal/stroke_input_modeler_test.cc:input_model_types)
 
