@@ -20,9 +20,7 @@
 #include <utility>
 
 #include "absl/types/span.h"
-#include "ink/color/color.h"
 #include "ink/geometry/affine_transform.h"
-#include "ink/geometry/angle.h"
 #include "ink/geometry/envelope.h"
 #include "ink/geometry/mesh.h"
 #include "ink/geometry/mutable_mesh.h"
@@ -41,19 +39,6 @@ namespace ink::geometry_internal {
 // See https://en.wikipedia.org/wiki/Barycentric_coordinate_system.
 std::optional<std::array<float, 3>> GetBarycentricCoordinates(
     const Triangle& triangle, Point position);
-
-// Interpolates from `a` to `b` by separately interpolating or extrapolating
-// the direction and magnitude based on the parameter `t`.
-//
-//   * When `a` and `b` have different magnitudes and directions, this produces
-//     points on an Archimedean spiral containing `a`, `b`, and the origin.
-//   * When `a` and `b` have the same direction, this is equivalent to a regular
-//     linear interpolation or extrapolation. This is a degenerate spiral with
-//     infinite radial separation between loops.
-//   * When `a` and `b` have the same magnitude, this is equivalent to the 2D
-//     case of spherical interpolation (https://en.wikipedia.org/wiki/Slerp).
-//     This is a degenerate spiral with zero radial separation between loops.
-Vec SpiralLerp(Vec a, Vec b, float t);
 
 // Returns the `Envelope` of `mesh` positions.
 //
@@ -74,43 +59,6 @@ Envelope CalculateEnvelope(const MutableMesh& mesh);
 //     segment.Lerp(segment.Project(point)) - point
 std::optional<Vec> VectorFromPointToSegmentProjection(Point point,
                                                       const Segment& segment);
-
-// Linearly interpolates between `a` and `b`. Extrapolates when `t` is not in
-// [0, 1].
-//
-// In the case where `a` == `b` the function will return `a` for any value of
-// `t`.
-//
-// Note that the `Angle` overload simply interpolates the value of the `Angle`;
-// it does not have any special case logic for congruent angles. I.e., for
-// `Angle`s that differ by more than 2π, this will interpolate through one (or
-// more) full rotations, and for `Angle`s that differ by less than 2π, this
-// may interpolate the "long way" around the unit circle. If you require that
-// behavior, you can achieve it by normalizing the `Angle`s w.r.t. a reference
-// `Angle` (see also `Angle::Normalized` and `Angle::NormalizedAboutZero`).
-float Lerp(float a, float b, float t);
-Point Lerp(Point a, Point b, float t);
-Color::RgbaFloat Lerp(const Color::RgbaFloat& a, const Color::RgbaFloat& b,
-                      float t);
-Angle Lerp(Angle a, Angle b, float t);
-Vec Lerp(Vec a, Vec b, float t);
-
-// Linearly interpolates between `a` and `b` in the shorter direction between
-// the two angles and returns a value in range [0, 2pi).
-Angle NormalizedAngleLerp(Angle a, Angle b, float t);
-
-// Linearly rescales `t` relative to `a` and `b`, such that `a` maps to 0, and
-// `b` maps to 1. If `value` is between `a` and `b`, the result will lie in the
-// interval [0, 1].
-//
-// If `a` == `b` this function will return 0, for any `value`.
-float InverseLerp(float a, float b, float value);
-
-// Linearly maps an `input_value` from an `input_range` to an`output_range` such
-// that `input_range.first` maps to `output_range.first` and
-// `input_range.second` maps to `output_range.second`.
-float LinearMap(float input_value, std::pair<float, float> input_range,
-                std::pair<float, float> output_range);
 
 // Returns the ratio along `a` (per `Segment::Lerp`) at which it intersects `b`,
 // and along `b' (per `Segment::Lerp`) at which it intersects `a` or

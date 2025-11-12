@@ -23,9 +23,7 @@
 
 #include "absl/log/absl_check.h"
 #include "absl/types/span.h"
-#include "ink/color/color.h"
 #include "ink/geometry/affine_transform.h"
-#include "ink/geometry/angle.h"
 #include "ink/geometry/envelope.h"
 #include "ink/geometry/internal/intersects_internal.h"
 #include "ink/geometry/mesh.h"
@@ -49,17 +47,6 @@ std::optional<std::array<float, 3>> GetBarycentricCoordinates(
   float b0 = Vec::Determinant(b, c) / triangle_determinant;
   float b1 = Vec::Determinant(a, c) / triangle_determinant;
   return std::array<float, 3>({b0, b1, 1 - b0 - b1});
-}
-
-Vec SpiralLerp(Vec a, Vec b, float t) {
-  if (t == 0) return a;
-  if (t == 1) return b;
-
-  Angle direction = a.Direction() + t * Vec::SignedAngleBetween(a, b);
-  // Note that magnitude can lerp to a negative value, which evaluates to the
-  // desired reflection through the origin.
-  float magnitude = (1 - t) * a.Magnitude() + t * b.Magnitude();
-  return Vec::FromDirectionAndMagnitude(direction, magnitude);
 }
 
 Envelope CalculateEnvelope(const MutableMesh& mesh) {
@@ -99,44 +86,6 @@ std::optional<Vec> VectorFromPointToSegmentProjection(Point point,
   // where sgn() is +/-1.
   return (negative_twice_triangle_signed_area / base_length_squared) *
          base_vector.Orthogonal();
-}
-
-float Lerp(float a, float b, float t) { return a + (b - a) * t; }
-
-Point Lerp(Point a, Point b, float t) {
-  return Segment{.start = a, .end = b}.Lerp(t);
-}
-
-Color::RgbaFloat Lerp(const Color::RgbaFloat& a, const Color::RgbaFloat& b,
-                      float t) {
-  return {.r = a.r * (1 - t) + b.r * t,
-          .g = a.g * (1 - t) + b.g * t,
-          .b = a.b * (1 - t) + b.b * t,
-          .a = a.a * (1 - t) + b.a * t};
-}
-
-Angle Lerp(Angle a, Angle b, float t) { return (1 - t) * a + t * b; }
-Angle NormalizedAngleLerp(Angle a, Angle b, float t) {
-  return (a + Lerp(Angle(), (b - a).NormalizedAboutZero(), t)).Normalized();
-}
-
-Vec Lerp(Vec a, Vec b, float t) {
-  return Vec{Lerp(a.x, b.x, t), Lerp(a.y, b.y, t)};
-}
-
-float InverseLerp(float a, float b, float value) {
-  // If the interval between `a` and `b` is 0, there is no way to get to `t`
-  // because in the other direction the value of `t` won't impact the result.
-  if (b - a == 0.f) {
-    return 0.f;
-  }
-  return (value - a) / (b - a);
-}
-
-float LinearMap(float input_value, std::pair<float, float> input_range,
-                std::pair<float, float> output_range) {
-  return Lerp(output_range.first, output_range.second,
-              InverseLerp(input_range.first, input_range.second, input_value));
 }
 
 std::optional<std::pair<float, float>> SegmentIntersectionRatio(

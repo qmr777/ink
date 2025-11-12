@@ -19,15 +19,21 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "fuzztest/fuzztest.h"
 #include "ink/brush/brush_behavior.h"
+#include "ink/brush/brush_family.h"
 #include "ink/brush/brush_tip.h"
 #include "ink/brush/easing_function.h"
+#include "ink/brush/fuzz_domains.h"
 #include "ink/geometry/angle.h"
 #include "ink/geometry/point.h"
 #include "ink/geometry/type_matchers.h"
+#include "ink/strokes/input/fuzz_domains.h"
 #include "ink/strokes/input/stroke_input.h"
+#include "ink/strokes/input/stroke_input_batch.h"
 #include "ink/strokes/internal/brush_tip_state.h"
 #include "ink/strokes/internal/modeled_stroke_input.h"
+#include "ink/strokes/internal/stroke_input_modeler.h"
 #include "ink/types/duration.h"
 
 namespace ink::strokes_internal {
@@ -40,9 +46,12 @@ using ::testing::ExplainMatchResult;
 using ::testing::Field;
 using ::testing::FloatEq;
 using ::testing::FloatNear;
+using ::testing::Gt;
 using ::testing::IsEmpty;
+using ::testing::Le;
 using ::testing::Ne;
 using ::testing::Pointwise;
+using ::testing::SizeIs;
 
 // Matcher that compares all fields of two tip states for equality except the
 // positions.
@@ -1102,6 +1111,60 @@ TEST(BrushTipModelerTest, TipWithNonZeroParticleGapDistanceAndDuration) {
   EXPECT_THAT(modeler.VolatileTipStates(), IsEmpty());
 }
 
+TEST(BrushTipModelerTest, SmallParticleGapDistanceWithLongInputDistance) {
+  // Create a brush tip with a particle gap of 1 unit, and a set of modeled
+  // inputs that travels a distance of 10^30 units.
+  BrushTip brush_tip = {.particle_gap_distance_scale = 1};
+  InputModelerState input_modeler_state;
+  std::vector<ModeledStrokeInput> inputs = {
+      {.position = Point{0, 0},
+       .traveled_distance = 0,
+       .elapsed_time = Duration32::Zero()},
+      {.position = Point{1e30, 0},
+       .traveled_distance = 1e30,
+       .elapsed_time = Duration32::Seconds(1)},
+  };
+  input_modeler_state.real_input_count = inputs.size();
+  input_modeler_state.stable_input_count = inputs.size();
+  // In theory, the tip modeler should be forced to create 10^30 particle tip
+  // states, which would definitely cause us to run out of memory and crash.
+  BrushTipModeler modeler;
+  modeler.StartStroke(&brush_tip, /* brush_size = */ 2);
+  modeler.UpdateStroke(input_modeler_state, inputs);
+  // The tip modeler should impose some kind of limitation to prevent this. This
+  // particular test has no strong opinions on what that limit should be, other
+  // than that tip modeling should complete successfully, and result in some
+  // nonzero number of tip states that isn't "millions".
+  EXPECT_THAT(modeler.NewFixedTipStates(), SizeIs(AllOf(Gt(0), Le(1000000))));
+}
+
+TEST(BrushTipModelerTest, SmallParticleGapDurationWithLongInputDuration) {
+  // Create a brush tip with a particle duration gap of 1 femtosecond, and a set
+  // of modeled inputs that spans a duration of 1 second.
+  BrushTip brush_tip = {.particle_gap_duration = Duration32::Seconds(1e-15)};
+  InputModelerState input_modeler_state;
+  std::vector<ModeledStrokeInput> inputs = {
+      {.position = Point{0, 0},
+       .traveled_distance = 0,
+       .elapsed_time = Duration32::Zero()},
+      {.position = Point{1, 0},
+       .traveled_distance = 1,
+       .elapsed_time = Duration32::Seconds(1)},
+  };
+  input_modeler_state.real_input_count = inputs.size();
+  input_modeler_state.stable_input_count = inputs.size();
+  // In theory, the tip modeler should be forced to create 10^15 particle tip
+  // states, which would definitely cause us to run out of memory and crash.
+  BrushTipModeler modeler;
+  modeler.StartStroke(&brush_tip, /* brush_size = */ 2);
+  modeler.UpdateStroke(input_modeler_state, inputs);
+  // The tip modeler should impose some kind of limitation to prevent this. This
+  // particular test has no strong opinions on what that limit should be, other
+  // than that tip modeling should complete successfully, and result in some
+  // nonzero number of tip states that isn't "millions".
+  EXPECT_THAT(modeler.NewFixedTipStates(), SizeIs(AllOf(Gt(0), Le(1000000))));
+}
+
 TEST(BrushTipModelerTest, UnstableTargetModifierReplacedWithNull) {
   BrushTipModeler modeler;
   BrushTip brush_tip = {
@@ -1230,6 +1293,28 @@ TEST(BrushTipModelerDeathTest, NanBrushSize) {
   EXPECT_DEATH_IF_SUPPORTED(
       modeler.StartStroke(&tip, std::numeric_limits<float>::quiet_NaN()), "");
 }
+
+void CanModelAnyValidBrushTipAndInputs(const BrushTip& brush_tip,
+                                       const StrokeInputBatch& input_batch) {
+  float brush_size = 1;
+  float brush_epsilon = 0.01;
+  // Run an arbitrary `StrokeInputBatch` through the naive input modeler as a
+  // way of getting a mostly-arbitrary (but valid) input modeler state and
+  // sequence of modeled inputs.
+  StrokeInputModeler input_modeler;
+  input_modeler.StartStroke(BrushFamily::ExperimentalNaiveModel{},
+                            brush_epsilon);
+  input_modeler.ExtendStroke(input_batch, StrokeInputBatch(),
+                             Duration32::Zero());
+  // We should be able to apply the `BrushTipModeler` to any valid brush tip and
+  // input sequence, and not crash.
+  BrushTipModeler tip_modeler;
+  tip_modeler.StartStroke(&brush_tip, brush_size);
+  tip_modeler.UpdateStroke(input_modeler.GetState(),
+                           input_modeler.GetModeledInputs());
+}
+FUZZ_TEST(BrushTipModelerFuzzTest, CanModelAnyValidBrushTipAndInputs)
+    .WithDomains(ValidBrushTip(), ArbitraryStrokeInputBatch());
 
 }  // namespace
 }  // namespace ink::strokes_internal
