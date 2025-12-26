@@ -42,9 +42,9 @@
 namespace ink::strokes_internal {
 namespace {
 
+using ::ink::geometry_internal::FloatModulo;
 using ::ink::geometry_internal::InverseLerp;
 using ::ink::geometry_internal::Lerp;
-using ::ink::geometry_internal::NormalizedAngleLerp;
 
 bool IsToolTypeEnabled(BrushBehavior::EnabledToolTypes enabled_tool_types,
                        StrokeInput::ToolType tool_type) {
@@ -99,8 +99,8 @@ Duration32 GetTimeSinceInput(const InputModelerState& input_modeler_state,
 // Returns the value of the given `Source` at the given modeled input, or
 // `std::nullopt` if the source value is indeterminate at that input.
 std::optional<float> GetSourceValue(
-    const ModeledStrokeInput& input, std::optional<Angle> travel_direction,
-    float brush_size, const InputModelerState& input_modeler_state,
+    const ModeledStrokeInput& input, float brush_size,
+    const InputModelerState& input_modeler_state,
     BrushBehavior::Source source) {
   switch (source) {
     case BrushBehavior::Source::kNormalizedPressure:
@@ -136,17 +136,17 @@ std::optional<float> GetSourceValue(
     case BrushBehavior::Source::kVelocityYInMultiplesOfBrushSizePerSecond:
       return input.velocity.y / brush_size;
     case BrushBehavior::Source::kDirectionInRadians:
-      if (!travel_direction.has_value()) break;
-      return travel_direction->Normalized().ValueInRadians();
+      if (input.velocity == Vec()) break;
+      return input.velocity.Direction().Normalized().ValueInRadians();
     case BrushBehavior::Source::kDirectionAboutZeroInRadians:
-      if (!travel_direction.has_value()) break;
-      return travel_direction->ValueInRadians();
+      if (input.velocity == Vec()) break;
+      return input.velocity.Direction().ValueInRadians();
     case BrushBehavior::Source::kNormalizedDirectionX:
-      if (!travel_direction.has_value()) break;
-      return Cos(*travel_direction);
+      if (input.velocity == Vec()) break;
+      return input.velocity.AsUnitVec().x;
     case BrushBehavior::Source::kNormalizedDirectionY:
-      if (!travel_direction.has_value()) break;
-      return Sin(*travel_direction);
+      if (input.velocity == Vec()) break;
+      return input.velocity.AsUnitVec().y;
     case BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize:
       return input.traveled_distance / brush_size;
     case BrushBehavior::Source::kTimeOfInputInSeconds:
@@ -307,9 +307,9 @@ inline float DampOffsetTransition(float target_offset, float previous_offset,
 
 void ProcessBehaviorNodeImpl(const BrushBehavior::SourceNode& node,
                              const BehaviorNodeContext& context) {
-  std::optional<float> source_value = GetSourceValue(
-      context.current_input, context.current_travel_direction,
-      context.brush_size, context.input_modeler_state, node.source);
+  std::optional<float> source_value =
+      GetSourceValue(context.current_input, context.brush_size,
+                     context.input_modeler_state, node.source);
   if (!source_value.has_value()) {
     context.stack.push_back(kNullBehaviorNodeValue);
     return;
@@ -589,21 +589,29 @@ void ProcessBehaviorNode(const BehaviorNodeImplementation& node,
 
 namespace {
 
-// Percentage shifts for each `BrushBehavior::Target` of a `BrushTipState`.
+// Modifiers for each `BrushBehavior::Target` of a `BrushTipState`.
 struct BrushTipStateModifiers {
   Vec position_offset_in_stroke_units;
   float width_multiplier = 1;
   float height_multiplier = 1;
   Angle slant_offset;
   float corner_rounding_offset = 0;
-  Angle rotation_offset;
+  Angle rotation_offset;  // always in range [-π, π] radians
   float pinch_offset = 0;
-  float texture_animation_progress_offset = 0;
-  Angle hue_offset;
+  float texture_animation_progress_offset = 0;  // always in range [0, 1)
+  Angle hue_offset;  // always in range [0, 2π) radians
   float saturation_multiplier = 1;
   float luminosity = 0;
   float opacity_multiplier = 1;
 };
+
+// Multiplies two non-NaN values, except that zero times infinity results in
+// zero instead of NaN.
+float NanSafeMultiply(float a, float b) {
+  ABSL_DCHECK(!std::isnan(a));
+  ABSL_DCHECK(!std::isnan(b));
+  return (a == 0 || b == 0) ? 0 : a * b;
+}
 
 // Adds `modifier` to the appropriate member of `tip_state_modifiers` according
 // to the `target` enum.
@@ -614,14 +622,18 @@ void ApplyModifierToTarget(float modifier, BrushBehavior::Target target,
   ABSL_DCHECK(std::isfinite(modifier));
   switch (target) {
     case BrushBehavior::Target::kWidthMultiplier:
-      tip_state_modifiers.width_multiplier *= modifier;
+      tip_state_modifiers.width_multiplier =
+          NanSafeMultiply(tip_state_modifiers.width_multiplier, modifier);
       break;
     case BrushBehavior::Target::kHeightMultiplier:
-      tip_state_modifiers.height_multiplier *= modifier;
+      tip_state_modifiers.height_multiplier =
+          NanSafeMultiply(tip_state_modifiers.height_multiplier, modifier);
       break;
     case BrushBehavior::Target::kSizeMultiplier:
-      tip_state_modifiers.width_multiplier *= modifier;
-      tip_state_modifiers.height_multiplier *= modifier;
+      tip_state_modifiers.width_multiplier =
+          NanSafeMultiply(tip_state_modifiers.width_multiplier, modifier);
+      tip_state_modifiers.height_multiplier =
+          NanSafeMultiply(tip_state_modifiers.height_multiplier, modifier);
       break;
     case BrushBehavior::Target::kSlantOffsetInRadians:
       tip_state_modifiers.slant_offset += Angle::Radians(modifier);
@@ -630,7 +642,9 @@ void ApplyModifierToTarget(float modifier, BrushBehavior::Target target,
       tip_state_modifiers.pinch_offset += modifier;
       break;
     case BrushBehavior::Target::kRotationOffsetInRadians:
-      tip_state_modifiers.rotation_offset += Angle::Radians(modifier);
+      tip_state_modifiers.rotation_offset =
+          (tip_state_modifiers.rotation_offset + Angle::Radians(modifier))
+              .NormalizedAboutZero();
       break;
     case BrushBehavior::Target::kCornerRoundingOffset:
       tip_state_modifiers.corner_rounding_offset += modifier;
@@ -658,19 +672,24 @@ void ApplyModifierToTarget(float modifier, BrushBehavior::Target target,
       }
       break;
     case BrushBehavior::Target::kTextureAnimationProgressOffset:
-      tip_state_modifiers.texture_animation_progress_offset += modifier;
+      tip_state_modifiers.texture_animation_progress_offset = FloatModulo(
+          tip_state_modifiers.texture_animation_progress_offset + modifier, 1);
       break;
     case BrushBehavior::Target::kHueOffsetInRadians:
-      tip_state_modifiers.hue_offset += Angle::Radians(modifier);
+      tip_state_modifiers.hue_offset =
+          (tip_state_modifiers.hue_offset + Angle::Radians(modifier))
+              .Normalized();
       break;
     case BrushBehavior::Target::kSaturationMultiplier:
-      tip_state_modifiers.saturation_multiplier *= modifier;
+      tip_state_modifiers.saturation_multiplier =
+          NanSafeMultiply(tip_state_modifiers.saturation_multiplier, modifier);
       break;
     case BrushBehavior::Target::kLuminosity:
       tip_state_modifiers.luminosity += modifier;
       break;
     case BrushBehavior::Target::kOpacityMultiplier:
-      tip_state_modifiers.opacity_multiplier *= modifier;
+      tip_state_modifiers.opacity_multiplier =
+          NanSafeMultiply(tip_state_modifiers.opacity_multiplier, modifier);
       break;
   }
 }
@@ -679,10 +698,12 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
                               BrushTipState& tip_state) {
   tip_state.position += modifiers.position_offset_in_stroke_units;
   if (modifiers.width_multiplier != 1) {
-    tip_state.width *= std::clamp(modifiers.width_multiplier, 0.f, 2.f);
+    tip_state.width = NanSafeMultiply(
+        tip_state.width, std::clamp(modifiers.width_multiplier, 0.f, 2.f));
   }
   if (modifiers.height_multiplier != 1) {
-    tip_state.height *= std::clamp(modifiers.height_multiplier, 0.f, 2.f);
+    tip_state.height = NanSafeMultiply(
+        tip_state.height, std::clamp(modifiers.height_multiplier, 0.f, 2.f));
   }
   if (modifiers.slant_offset != Angle()) {
     tip_state.slant = std::clamp(tip_state.slant + modifiers.slant_offset,
@@ -694,7 +715,7 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
   }
   if (modifiers.rotation_offset != Angle()) {
     tip_state.rotation =
-        (tip_state.rotation + modifiers.rotation_offset).Normalized();
+        (tip_state.rotation + modifiers.rotation_offset).NormalizedAboutZero();
   }
   if (modifiers.corner_rounding_offset != 0) {
     tip_state.percent_radius = std::clamp(
@@ -702,10 +723,9 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
   }
   if (modifiers.texture_animation_progress_offset != 0) {
     tip_state.texture_animation_progress_offset =
-        geometry_internal::FloatModulo(
-            tip_state.texture_animation_progress_offset +
-                modifiers.texture_animation_progress_offset,
-            1);
+        FloatModulo(tip_state.texture_animation_progress_offset +
+                        modifiers.texture_animation_progress_offset,
+                    1);
   }
   if (modifiers.hue_offset != Angle()) {
     tip_state.hue_offset_in_full_turns =
@@ -726,11 +746,16 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
 
 }  // namespace
 
-BrushTipState CreateTipState(Point position, std::optional<Angle> direction,
+BrushTipState CreateTipState(Point position, Vec velocity,
                              const BrushTip& brush_tip, float brush_size,
                              absl::Span<const BrushBehavior::Target> targets,
                              absl::Span<const float> target_modifiers) {
   ABSL_DCHECK_EQ(targets.size(), target_modifiers.size());
+
+  std::optional<Angle> direction;
+  if (velocity != Vec()) {
+    direction = velocity.Direction();
+  }
 
   BrushTipStateModifiers tip_state_modifiers = {};
   for (size_t i = 0; i < targets.size(); ++i) {
@@ -743,26 +768,12 @@ BrushTipState CreateTipState(Point position, std::optional<Angle> direction,
       .width = brush_size * brush_tip.scale.x,
       .height = brush_size * brush_tip.scale.y,
       .percent_radius = brush_tip.corner_rounding,
-      .rotation = brush_tip.rotation,
+      .rotation = brush_tip.rotation.NormalizedAboutZero(),
       .slant = brush_tip.slant,
       .pinch = brush_tip.pinch,
   };
   ApplyModifiersToTipState(tip_state_modifiers, tip_state);
   return tip_state;
-}
-
-ModeledStrokeInput Lerp(const ModeledStrokeInput& a,
-                        const ModeledStrokeInput& b, float t) {
-  return {
-      .position = Lerp(a.position, b.position, t),
-      .velocity = Lerp(a.velocity, b.velocity, t),
-      .acceleration = Lerp(a.acceleration, b.acceleration, t),
-      .traveled_distance = Lerp(a.traveled_distance, b.traveled_distance, t),
-      .elapsed_time = Lerp(a.elapsed_time, b.elapsed_time, t),
-      .pressure = Lerp(a.pressure, b.pressure, t),
-      .tilt = Lerp(a.tilt, b.tilt, t),
-      .orientation = NormalizedAngleLerp(a.orientation, b.orientation, t),
-  };
 }
 
 }  // namespace ink::strokes_internal
