@@ -56,8 +56,8 @@ static jclass class_mutable_parallelogram = nullptr;
 static jmethodID method_mutable_parallelogram_set_center_dim_rot_shear =
     nullptr;
 
-static jclass class_brush_native = nullptr;
-static jmethodID method_brush_native_compose_color_long_from_components =
+static jclass class_color_native = nullptr;
+static jmethodID method_color_native_compose_color_long_from_components =
     nullptr;
 
 static jclass class_input_tool_type = nullptr;
@@ -134,8 +134,8 @@ void UnloadJvmInterface(JNIEnv* env) {
   DeleteCachedClass(env, class_mutable_parallelogram);
   method_mutable_parallelogram_set_center_dim_rot_shear = nullptr;
 
-  DeleteCachedClass(env, class_brush_native);
-  method_brush_native_compose_color_long_from_components = nullptr;
+  DeleteCachedClass(env, class_color_native);
+  method_color_native_compose_color_long_from_components = nullptr;
 
   DeleteCachedClass(env, class_input_tool_type);
   method_input_tool_type_from = nullptr;
@@ -304,8 +304,8 @@ jmethodID MethodBoxAccumulatorPopulateFrom(JNIEnv* env) {
 
 jclass ClassImmutableParallelogram(JNIEnv* env) {
   if (class_immutable_parallelogram == nullptr) {
-    class_immutable_parallelogram =
-        FindAndCacheClass(env, INK_PACKAGE "/geometry/ImmutableParallelogram");
+    class_immutable_parallelogram = FindAndCacheClass(
+        env, INK_PACKAGE "/geometry/ImmutableParallelogram");
   }
   return class_immutable_parallelogram;
 }
@@ -314,19 +314,20 @@ jmethodID
 MethodImmutableParallelogramFromCenterDimensionsRotationInDegreesAndSkew(
     JNIEnv* env) {
   if (method_immutable_parallelogram_from_center_dim_rot_skew == nullptr) {
-    method_immutable_parallelogram_from_center_dim_rot_skew = GetStaticMethodId(
-        env, ClassImmutableParallelogram(env),
-        "fromCenterDimensionsRotationInDegreesAndSkew",
-        "(L" INK_PACKAGE "/geometry/ImmutableVec;FFFF)L" INK_PACKAGE
-        "/geometry/ImmutableParallelogram;");
+    method_immutable_parallelogram_from_center_dim_rot_skew =
+        GetStaticMethodId(env, ClassImmutableParallelogram(env),
+                          "fromCenterDimensionsRotationInDegreesAndSkew",
+                          "(L" INK_PACKAGE
+                          "/geometry/ImmutableVec;FFFF)L" INK_PACKAGE
+                          "/geometry/ImmutableParallelogram;");
   }
   return method_immutable_parallelogram_from_center_dim_rot_skew;
 }
 
 jclass ClassMutableParallelogram(JNIEnv* env) {
   if (class_mutable_parallelogram == nullptr) {
-    class_mutable_parallelogram =
-        FindAndCacheClass(env, INK_PACKAGE "/geometry/MutableParallelogram");
+    class_mutable_parallelogram = FindAndCacheClass(
+        env, INK_PACKAGE "/geometry/MutableParallelogram");
   }
   return class_mutable_parallelogram;
 }
@@ -334,29 +335,29 @@ jclass ClassMutableParallelogram(JNIEnv* env) {
 jmethodID MethodMutableParallelogramSetCenterDimensionsRotationInDegreesAndSkew(
     JNIEnv* env) {
   if (method_mutable_parallelogram_set_center_dim_rot_shear == nullptr) {
-    method_mutable_parallelogram_set_center_dim_rot_shear =
-        GetMethodId(env, ClassMutableParallelogram(env),
-                    "setCenterDimensionsRotationInDegreesAndSkew",
-                    "(FFFFFF)L" INK_PACKAGE "/geometry/MutableParallelogram;");
+    method_mutable_parallelogram_set_center_dim_rot_shear = GetMethodId(
+        env, ClassMutableParallelogram(env),
+        "setCenterDimensionsRotationInDegreesAndSkew",
+        "(FFFFFF)L" INK_PACKAGE "/geometry/MutableParallelogram;");
   }
   return method_mutable_parallelogram_set_center_dim_rot_shear;
 }
 
-jclass ClassBrushNative(JNIEnv* env) {
-  if (class_brush_native == nullptr) {
-    class_brush_native =
-        FindAndCacheClass(env, INK_PACKAGE "/brush/BrushNative");
+jclass ClassColorNative(JNIEnv* env) {
+  if (class_color_native == nullptr) {
+    class_color_native =
+        FindAndCacheClass(env, INK_PACKAGE "/brush/ColorNative");
   }
-  return class_brush_native;
+  return class_color_native;
 }
 
-jmethodID MethodBrushNativeComposeColorLongFromComponents(JNIEnv* env) {
-  if (method_brush_native_compose_color_long_from_components == nullptr) {
-    method_brush_native_compose_color_long_from_components =
-        GetStaticMethodId(env, ClassBrushNative(env),
+jmethodID MethodColorNativeComposeColorLongFromComponents(JNIEnv* env) {
+  if (method_color_native_compose_color_long_from_components == nullptr) {
+    method_color_native_compose_color_long_from_components =
+        GetStaticMethodId(env, ClassColorNative(env),
                           "composeColorLongFromComponents", "(IFFFF)J");
   }
-  return method_brush_native_compose_color_long_from_components;
+  return method_color_native_compose_color_long_from_components;
 }
 
 jclass ClassInputToolType(JNIEnv* env) {

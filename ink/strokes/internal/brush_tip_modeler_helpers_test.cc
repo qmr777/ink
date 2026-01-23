@@ -892,7 +892,7 @@ TEST_F(ProcessBehaviorNodeTest, NoiseNodeDistanceInCentimeters) {
   context_.previous_input_metrics = InputMetrics{.traveled_distance = 0};
   NoiseNodeImplementation noise_impl = {
       .generator_index = 0,
-      .vary_over = BrushBehavior::DampingSource::kDistanceInCentimeters,
+      .vary_over = BrushBehavior::ProgressDomain::kDistanceInCentimeters,
       .base_period = 3.0,
   };
 
@@ -918,7 +918,7 @@ TEST_F(ProcessBehaviorNodeTest,
   context_.previous_input_metrics = InputMetrics{.traveled_distance = 0};
   NoiseNodeImplementation noise_impl = {
       .generator_index = 0,
-      .vary_over = BrushBehavior::DampingSource::kDistanceInCentimeters,
+      .vary_over = BrushBehavior::ProgressDomain::kDistanceInCentimeters,
       .base_period = 3.0,
   };
 
@@ -943,7 +943,7 @@ TEST_F(ProcessBehaviorNodeTest, NoiseNodeDistanceInMultiplesOfBrushSize) {
   NoiseNodeImplementation noise_impl = {
       .generator_index = 0,
       .vary_over =
-          BrushBehavior::DampingSource::kDistanceInMultiplesOfBrushSize,
+          BrushBehavior::ProgressDomain::kDistanceInMultiplesOfBrushSize,
       .base_period = 3.0,
   };
 
@@ -967,7 +967,7 @@ TEST_F(ProcessBehaviorNodeTest, NoiseNodeTimeInSeconds) {
   };
   NoiseNodeImplementation noise_impl = {
       .generator_index = 0,
-      .vary_over = BrushBehavior::DampingSource::kTimeInSeconds,
+      .vary_over = BrushBehavior::ProgressDomain::kTimeInSeconds,
       .base_period = 3.0,
   };
 
@@ -1088,7 +1088,7 @@ TEST_F(ProcessBehaviorNodeTest, DampingNodeDistanceInCentimeters) {
   context_.previous_input_metrics = InputMetrics{.traveled_distance = 0};
   DampingNodeImplementation damping_impl = {
       .damping_index = 0,
-      .damping_source = BrushBehavior::DampingSource::kDistanceInCentimeters,
+      .damping_source = BrushBehavior::ProgressDomain::kDistanceInCentimeters,
       .damping_gap = 5.0f,
   };
 
@@ -1137,7 +1137,7 @@ TEST_F(ProcessBehaviorNodeTest,
   context_.previous_input_metrics = InputMetrics{.traveled_distance = 0};
   DampingNodeImplementation damping_impl = {
       .damping_index = 0,
-      .damping_source = BrushBehavior::DampingSource::kDistanceInCentimeters,
+      .damping_source = BrushBehavior::ProgressDomain::kDistanceInCentimeters,
       .damping_gap = 5.0f,
   };
 
@@ -1158,7 +1158,7 @@ TEST_F(ProcessBehaviorNodeTest, DampingNodeDistanceInMultiplesOfBrushSize) {
   DampingNodeImplementation damping_impl = {
       .damping_index = 0,
       .damping_source =
-          BrushBehavior::DampingSource::kDistanceInMultiplesOfBrushSize,
+          BrushBehavior::ProgressDomain::kDistanceInMultiplesOfBrushSize,
       .damping_gap = 5.0f,
   };
 
@@ -1207,7 +1207,7 @@ TEST_F(ProcessBehaviorNodeTest, DampingNodeTimeInSeconds) {
   };
   DampingNodeImplementation damping_impl = {
       .damping_index = 0,
-      .damping_source = BrushBehavior::DampingSource::kTimeInSeconds,
+      .damping_source = BrushBehavior::ProgressDomain::kTimeInSeconds,
       .damping_gap = 0.5f,
   };
 
@@ -1250,6 +1250,66 @@ TEST_F(ProcessBehaviorNodeTest, ResponseNode) {
   ProcessBehaviorNode(
       EasingImplementation({EasingFunction::Predefined::kEaseInOut}), context_);
   EXPECT_THAT(stack_, ElementsAre(FloatNear(0.87f, 0.01f)));
+}
+
+TEST_F(ProcessBehaviorNodeTest, IntegralNodeTimeInSeconds) {
+  IntegralNodeImplementation integral_impl = {
+      .integral_index = 0,
+      .integrate_over = BrushBehavior::ProgressDomain::kTimeInSeconds,
+      .integral_out_of_range_behavior = BrushBehavior::OutOfRange::kMirror,
+      .integral_value_range = {-5, 5},
+  };
+  std::vector<IntegralState> integrals = {{
+      .last_input = kNullBehaviorNodeValue,
+      .last_integral = 0,
+  }};
+  context_.integrals = absl::MakeSpan(integrals);
+  context_.previous_input_metrics = InputMetrics{
+      .elapsed_time = Duration32::Zero(),
+  };
+
+  // The integral remains at its initial value of zero as long as the input
+  // remains null, and this gets scaled within `integral_value_range`.
+  current_input_.elapsed_time = Duration32::Seconds(4);
+  stack_.push_back(kNullBehaviorNodeValue);
+  ProcessBehaviorNode(integral_impl, context_);
+  EXPECT_FLOAT_EQ(integrals[0].last_integral, 0);
+  EXPECT_THAT(stack_, ElementsAre(0.5));
+  context_.previous_input_metrics->elapsed_time = current_input_.elapsed_time;
+
+  // After the first non-null input, the integral is still at its initial value.
+  current_input_.elapsed_time += Duration32::Seconds(4);
+  stack_[0] = 0.75f;
+  ProcessBehaviorNode(integral_impl, context_);
+  EXPECT_FLOAT_EQ(integrals[0].last_integral, 0);
+  EXPECT_THAT(stack_, ElementsAre(0.5));
+  context_.previous_input_metrics->elapsed_time = current_input_.elapsed_time;
+
+  // As time passes, the integral increases equal to the input value integrated
+  // over time.
+  current_input_.elapsed_time += Duration32::Seconds(4);
+  stack_[0] = 0.75f;
+  ProcessBehaviorNode(integral_impl, context_);
+  EXPECT_FLOAT_EQ(integrals[0].last_integral, 3);
+  EXPECT_THAT(stack_, ElementsAre(FloatNear(0.8, 0.001f)));
+  context_.previous_input_metrics->elapsed_time = current_input_.elapsed_time;
+
+  // If the integral exceeds `integral_value_range`, the output value of the
+  // node follows `integral_out_of_range_behavior` (in this case, `kMirror`).
+  current_input_.elapsed_time += Duration32::Seconds(4);
+  stack_[0] = 0.75f;
+  ProcessBehaviorNode(integral_impl, context_);
+  EXPECT_FLOAT_EQ(integrals[0].last_integral, 6);
+  EXPECT_THAT(stack_, ElementsAre(FloatNear(0.9, 0.001f)));
+  context_.previous_input_metrics->elapsed_time = current_input_.elapsed_time;
+
+  // If the input becomes null, the integral node treats it as though it were
+  // still its previous value.
+  current_input_.elapsed_time += Duration32::Seconds(4);
+  stack_[0] = kNullBehaviorNodeValue;
+  ProcessBehaviorNode(integral_impl, context_);
+  EXPECT_FLOAT_EQ(integrals[0].last_integral, 9);
+  EXPECT_THAT(stack_, ElementsAre(FloatNear(0.6, 0.001f)));
 }
 
 TEST_F(ProcessBehaviorNodeTest, BinaryOpNodeSum) {

@@ -226,11 +226,12 @@ bool IsValidBehaviorBinaryOp(BrushBehavior::BinaryOp operation) {
   return false;
 }
 
-bool IsValidBehaviorDampingSource(BrushBehavior::DampingSource damping_source) {
+bool IsValidBehaviorProgressDomain(
+    BrushBehavior::ProgressDomain damping_source) {
   switch (damping_source) {
-    case BrushBehavior::DampingSource::kDistanceInCentimeters:
-    case BrushBehavior::DampingSource::kDistanceInMultiplesOfBrushSize:
-    case BrushBehavior::DampingSource::kTimeInSeconds:
+    case BrushBehavior::ProgressDomain::kDistanceInCentimeters:
+    case BrushBehavior::ProgressDomain::kDistanceInMultiplesOfBrushSize:
+    case BrushBehavior::ProgressDomain::kTimeInSeconds:
       return true;
   }
   return false;
@@ -253,6 +254,7 @@ int NodeInputCount(const BrushBehavior::FallbackFilterNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::ToolTypeFilterNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::DampingNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::ResponseNode& node) { return 1; }
+int NodeInputCount(const BrushBehavior::IntegralNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::BinaryOpNode& node) { return 2; }
 int NodeInputCount(const BrushBehavior::InterpolationNode& node) { return 3; }
 int NodeInputCount(const BrushBehavior::TargetNode& node) { return 1; }
@@ -307,7 +309,7 @@ absl::Status ValidateNode(const BrushBehavior::ConstantNode& node) {
 }
 
 absl::Status ValidateNode(const BrushBehavior::NoiseNode& node) {
-  if (!IsValidBehaviorDampingSource(node.vary_over)) {
+  if (!IsValidBehaviorProgressDomain(node.vary_over)) {
     return absl::InvalidArgumentError(
         absl::StrFormat("`NoiseNode::vary_over` holds non-enumerator value %d",
                         static_cast<int>(node.vary_over)));
@@ -339,7 +341,7 @@ absl::Status ValidateNode(const BrushBehavior::ToolTypeFilterNode& node) {
 }
 
 absl::Status ValidateNode(const BrushBehavior::DampingNode& node) {
-  if (!IsValidBehaviorDampingSource(node.damping_source)) {
+  if (!IsValidBehaviorProgressDomain(node.damping_source)) {
     return absl::InvalidArgumentError(absl::StrFormat(
         "`DampingNode::damping_source` holds non-enumerator value %d",
         static_cast<int>(node.damping_source)));
@@ -355,6 +357,27 @@ absl::Status ValidateNode(const BrushBehavior::DampingNode& node) {
 
 absl::Status ValidateNode(const BrushBehavior::ResponseNode& node) {
   return ValidateEasingFunction(node.response_curve);
+}
+
+absl::Status ValidateNode(const BrushBehavior::IntegralNode& node) {
+  if (!IsValidBehaviorProgressDomain(node.integrate_over)) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "`IntegralNode::integrate_over` holds non-enumerator value %d",
+        static_cast<int>(node.integrate_over)));
+  }
+  if (!IsValidBehaviorOutOfRange(node.integral_out_of_range_behavior)) {
+    return absl::InvalidArgumentError(
+        absl::StrFormat("`IntegralNode::integral_out_of_range_behavior` holds "
+                        "non-enumerator value %d",
+                        static_cast<int>(node.integral_out_of_range_behavior)));
+  }
+  if (!IsRangeValid(node.integral_value_range)) {
+    return absl::InvalidArgumentError(absl::StrFormat(
+        "`IntegralNode::integral_value_range` must hold 2 finite and distinct "
+        "values. Got {%f, %f}",
+        node.integral_value_range[0], node.integral_value_range[1]));
+  }
+  return absl::OkStatus();
 }
 
 absl::Status ValidateNode(const BrushBehavior::BinaryOpNode& node) {
@@ -658,16 +681,17 @@ std::string ToFormattedString(BrushBehavior::BinaryOp operation) {
   return absl::StrCat("BinaryOp(", static_cast<int>(operation), ")");
 }
 
-std::string ToFormattedString(BrushBehavior::DampingSource damping_source) {
-  switch (damping_source) {
-    case BrushBehavior::DampingSource::kDistanceInCentimeters:
+std::string ToFormattedString(BrushBehavior::ProgressDomain progress_domain) {
+  switch (progress_domain) {
+    case BrushBehavior::ProgressDomain::kDistanceInCentimeters:
       return "kDistanceInCentimeters";
-    case BrushBehavior::DampingSource::kDistanceInMultiplesOfBrushSize:
+    case BrushBehavior::ProgressDomain::kDistanceInMultiplesOfBrushSize:
       return "kDistanceInMultiplesOfBrushSize";
-    case BrushBehavior::DampingSource::kTimeInSeconds:
+    case BrushBehavior::ProgressDomain::kTimeInSeconds:
       return "kTimeInSeconds";
   }
-  return absl::StrCat("DampingSource(", static_cast<int>(damping_source), ")");
+  return absl::StrCat("ProgressDomain(", static_cast<int>(progress_domain),
+                      ")");
 }
 
 std::string ToFormattedString(BrushBehavior::Interpolation interpolation) {
@@ -727,6 +751,14 @@ std::string ToFormattedString(const BrushBehavior::BinaryOpNode& node) {
 
 std::string ToFormattedString(const BrushBehavior::InterpolationNode& node) {
   return absl::StrCat("InterpolationNode{", node.interpolation, "}");
+}
+
+std::string ToFormattedString(const BrushBehavior::IntegralNode& node) {
+  return absl::StrCat(
+      "IntegralNode{integrate_over=", node.integrate_over,
+      ", integral_out_of_range_behavior=", node.integral_out_of_range_behavior,
+      ", integral_value_range={", node.integral_value_range[0], ", ",
+      node.integral_value_range[1], "}}");
 }
 
 std::string ToFormattedString(const BrushBehavior::TargetNode& node) {

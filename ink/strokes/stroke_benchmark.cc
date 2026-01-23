@@ -33,7 +33,6 @@ namespace ink {
 namespace {
 
 using ::benchmark::internal::Benchmark;
-constexpr float kBrushEpsilon = 0.01;
 
 Brush MakeBrush(const BrushFamily& family, float brush_size,
                 float brush_epsilon) {
@@ -44,6 +43,7 @@ Brush MakeBrush(const BrushFamily& family, float brush_size,
 }
 
 void BenchmarkTestCases(Benchmark* b) {
+  // LINT.IfChange
   std::vector<int> brush_sizes;
   int num_test_files = kTestDataFiles.size();
   std::vector<stock_brushes::StockBrushesTestParam> stock_brushes_test_params =
@@ -58,13 +58,14 @@ void BenchmarkTestCases(Benchmark* b) {
       }
     }
   }
+  // LINT.ThenChange(//depot/google3/research/ink/perf_tests/labels/stroke_benchmark_labels.bzl)
 }
 
 void BM_Stroke(benchmark::State& state) {
   const float brush_size = state.range(0);
   const BrushFamily brush_family =
       stock_brushes::GetParams()[state.range(2)].second;
-  auto brush = MakeBrush(brush_family, brush_size, kBrushEpsilon);
+  auto brush = MakeBrush(brush_family, brush_size, kTestBrushEpsilon);
 
   absl::string_view test_inputs_name = kTestDataFiles[state.range(1)];
   auto inputs = LoadCompleteStrokeInputs(test_inputs_name);
@@ -85,7 +86,7 @@ void BM_InProgressStroke(benchmark::State& state) {
   const float brush_size = state.range(0);
   const BrushFamily brush_family =
       stock_brushes::GetParams()[state.range(2)].second;
-  auto brush = MakeBrush(brush_family, brush_size, kBrushEpsilon);
+  auto brush = MakeBrush(brush_family, brush_size, kTestBrushEpsilon);
 
   absl::string_view test_inputs_name = kTestDataFiles[state.range(1)];
   auto inputs = LoadIncrementalStrokeInputs(test_inputs_name);
