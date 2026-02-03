@@ -278,8 +278,10 @@ MATCHER_P(BrushBehaviorEqMatcher, expected,
                        " BrushBehavior (expected: ",
                        ::testing::PrintToString(expected), ")")) {
   return ExplainMatchResult(
-      Field("nodes", &BrushBehavior::nodes,
-            Pointwise(BrushBehaviorNodeEq(), expected.nodes)),
+      AllOf(Field("nodes", &BrushBehavior::nodes,
+                  Pointwise(BrushBehaviorNodeEq(), expected.nodes)),
+            Field("developer_comment", &BrushBehavior::developer_comment,
+                  Eq(expected.developer_comment))),
       arg, result_listener);
 }
 
@@ -431,12 +433,12 @@ MATCHER_P(BrushFamilyEqMatcher, expected,
                        " BrushFamily (expected: ",
                        ::testing::PrintToString(expected), ")")) {
   return ExplainMatchResult(
-      AllOf(Property(&BrushFamily::GetCoats,
+      AllOf(Property("GetCoats", &BrushFamily::GetCoats,
                      Pointwise(BrushCoatEq(), expected.GetCoats())),
-            Property(&BrushFamily::GetClientBrushFamilyId,
-                     Eq(expected.GetClientBrushFamilyId())),
-            Property(&BrushFamily::GetInputModel,
-                     BrushFamilyInputModelEq(expected.GetInputModel()))),
+            Property("GetInputModel", &BrushFamily::GetInputModel,
+                     BrushFamilyInputModelEq(expected.GetInputModel())),
+            Property("GetMetadata", &BrushFamily::GetMetadata,
+                     Eq(expected.GetMetadata()))),
       arg, result_listener);
 }
 
@@ -445,10 +447,12 @@ MATCHER_P(BrushEqMatcher, expected,
                        " Brush (expected: ", ::testing::PrintToString(expected),
                        ")")) {
   return ExplainMatchResult(
-      AllOf(Property(&Brush::GetFamily, BrushFamilyEq(expected.GetFamily())),
-            Property(&Brush::GetColor, Eq(expected.GetColor())),
-            Property(&Brush::GetSize, Eq(expected.GetSize())),
-            Property(&Brush::GetEpsilon, Eq(expected.GetEpsilon()))),
+      AllOf(Property("GetFamily", &Brush::GetFamily,
+                     BrushFamilyEq(expected.GetFamily())),
+            Property("GetColor", &Brush::GetColor, Eq(expected.GetColor())),
+            Property("GetSize", &Brush::GetSize, Eq(expected.GetSize())),
+            Property("GetEpsilon", &Brush::GetEpsilon,
+                     Eq(expected.GetEpsilon()))),
       arg, result_listener);
 }
 

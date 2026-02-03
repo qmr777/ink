@@ -154,7 +154,7 @@ TEST(BrushTest, DecodeBrushProto) {
              .size_unit = BrushPaint::TextureSizeUnit::kBrushSize,
              .size = {1, 2},
              .blend_mode = BrushPaint::BlendMode::kDstOut}}},
-      "", BrushFamily::ExperimentalNaiveModel{});
+      BrushFamily::ExperimentalNaiveModel{});
 
   ASSERT_EQ(expected_family.status(), absl::OkStatus());
   absl::StatusOr<Brush> expected_brush =
@@ -372,7 +372,7 @@ TEST(BrushTest, EncodeBrushWithoutTextureMap) {
                            .size = {10, 15},
                            .blend_mode = BrushPaint::BlendMode::kSrcIn}},
        .self_overlap = BrushPaint::SelfOverlap::kDiscard},
-      "", BrushFamily::SpringModel{});
+      BrushFamily::SpringModel{});
   ASSERT_EQ(family.status(), absl::OkStatus());
   absl::StatusOr<Brush> brush = Brush::Create(*family, Color::Green(), 10, 1.1);
   ASSERT_EQ(brush.status(), absl::OkStatus());
@@ -450,7 +450,7 @@ TEST(BrushTest, EncodeBrushWithTextureMap) {
                            .size = {10, 15},
                            .blend_mode = BrushPaint::BlendMode::kSrcIn}},
        .self_overlap = BrushPaint::SelfOverlap::kAccumulate},
-      "", BrushFamily::SpringModel{});
+      BrushFamily::SpringModel{});
   ASSERT_EQ(family.status(), absl::OkStatus());
   absl::StatusOr<Brush> brush = Brush::Create(*family, Color::Green(), 10, 1.1);
   ASSERT_EQ(brush.status(), absl::OkStatus());
@@ -770,6 +770,14 @@ TEST(BrushTest, EncodeBrushBehaviorDampingNodeWithInvalidProgressDomain) {
   EXPECT_EQ(node_proto.damping_node().damping_source(),
             proto::BrushBehavior::PROGRESS_DOMAIN_UNSPECIFIED);
   EXPECT_EQ(node_proto.damping_node().damping_gap(), 1.0f);
+}
+
+TEST(BrushTest, EncodeBrushBehaviorWithEmptyDeveloperComment) {
+  BrushBehavior behavior = {};
+  proto::BrushBehavior behavior_proto;
+  behavior_proto.set_developer_comment("foobar");
+  EncodeBrushBehavior(behavior, behavior_proto);
+  EXPECT_FALSE(behavior_proto.has_developer_comment());
 }
 
 void EncodeDecodeBrushRoundTrip(const Brush& brush_in) {
