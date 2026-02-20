@@ -417,12 +417,7 @@ message BrushPaint {
     // axes.
     optional float rotation_in_radians = 8;
 
-    reserved 9 to 13;
-
-    // Overall texture layer opacity.
-    optional float opacity = 14 [default = 1];
-
-    reserved 15;
+    reserved 9 to 15;
 
     // The rule by which the texture layers up to and including this one are
     // combined with the subsequent layer.
@@ -631,9 +626,9 @@ message BrushBehavior {
     SOURCE_TIME_OF_INPUT_IN_SECONDS = 13;
 
     // The time elapsed (in milliseconds) from when the stroke started to when
-    // this part of the stroke was drawn. The value remains fixed for any given
-    // part of the stroke once drawn.
-    SOURCE_TIME_OF_INPUT_IN_MILLIS = 14;
+    // this part of the stroke was drawn. This is deprecated; use
+    // SOURCE_TIME_OF_INPUT_IN_SECONDS instead.
+    SOURCE_TIME_OF_INPUT_IN_MILLIS = 14 [deprecated = true];
 
     // Distance traveled by the inputs of the current prediction, starting at 0
     // at the last non-predicted input, in multiples of the brush size. Zero for
@@ -645,10 +640,9 @@ message BrushBehavior {
     // stroke.
     SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS = 16;
 
-    // Elapsed time (in milliseconds) of the prediction, starting at 0 at the
-    // last non-predicted input. Zero for inputs before the predicted portion of
-    // the stroke.
-    SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS = 17;
+    // Elapsed time (in milliseconds) of the prediction. This is deprecated; use
+    // SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS instead.
+    SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS = 17 [deprecated = true];
 
     // The distance left to be traveled from a given modeled input to the
     // current last modeled input of the stroke in multiples of the brush size.
@@ -663,11 +657,8 @@ message BrushBehavior {
     SOURCE_TIME_SINCE_INPUT_IN_SECONDS = 19;
 
     // Time elapsed (in milliseconds) since the modeled stroke input. This
-    // continues to increase even after all stroke inputs have completed, and
-    // can be used to drive stroke animations. These enumerators are only
-    // compatible with a `source_out_of_range_behavior` of
-    // `OUT_OF_RANGE_CLAMP`, to ensure that the animation will eventually end.
-    SOURCE_TIME_SINCE_INPUT_IN_MILLIS = 20;
+    // is deprecated; use SOURCE_TIME_SINCE_INPUT_IN_SECONDS instead.
+    SOURCE_TIME_SINCE_INPUT_IN_MILLIS = 20 [deprecated = true];
 
     // Angle of the modeled stroke input's current direction of travel in stroke
     // coordinate space, normalized to the range [0, 2π). A value of 0 indicates
@@ -948,6 +939,12 @@ message BrushBehavior {
 
     // A + B, or null if either is null
     BINARY_OP_SUM = 2;
+
+    // min(A, B), or null if either is null
+    BINARY_OP_MIN = 3;
+
+    // max(A, B), or null if either is null
+    BINARY_OP_MAX = 4;
   }
   // LINT.ThenChange(../../brush/brush_behavior.h:binary_op)
 

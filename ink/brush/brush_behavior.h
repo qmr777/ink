@@ -29,10 +29,12 @@ namespace ink {
 // A behavior describing how stroke input properties should affect the shape and
 // color of the brush tip.
 //
-// The behavior is conceptually a graph made from the various node types defined
-// below. Each edge of the graph represents passing a nullable floating point
-// value between nodes, and each node in the graph fits into one of the
-// following categories:
+// The behavior is conceptually a tree made from the various node types defined
+// below. Each edge of the tree graph represents passing a nullable finite
+// floating point value (with "null" representing an undefined value) from a
+// node to its parent, and each node in the tree fits into one of the following
+// categories:
+//
 //   1. Leaf nodes generate an output value without graph inputs. For example,
 //      they can create a value from properties of stroke input.
 //   2. Filter nodes can conditionally toggle branches of the graph "on" by
@@ -165,7 +167,6 @@ struct BrushBehavior {
     // input. The value remains fixed for any given part of the stroke once
     // drawn.
     kTimeOfInputInSeconds,
-    kTimeOfInputInMillis,
     // Distance traveled by the inputs of the current prediction, starting at 0
     // at the last non-predicted input, in multiples of the brush size. Zero for
     // inputs before the predicted portion of the stroke.
@@ -173,7 +174,6 @@ struct BrushBehavior {
     // Elapsed time of the prediction, starting at 0 at the last non-predicted
     // input. Zero for inputs before the predicted portion of the stroke.
     kPredictedTimeElapsedInSeconds,
-    kPredictedTimeElapsedInMillis,
     // The distance left to be traveled from a given modeled input to the
     // current last modeled input of the stroke in multiples of the brush size.
     // This value changes for each input as the stroke is drawn.
@@ -184,7 +184,6 @@ struct BrushBehavior {
     // `source_out_of_range_behavior` of `kClamp`, to ensure that the animation
     // will eventually end.
     kTimeSinceInputInSeconds,
-    kTimeSinceInputInMillis,
     // Absolute acceleration of the modeled stroke input in multiples of the
     // brush size per second squared. Note that this value doesn't take into
     // account brush behaviors that offset the position of that visible point in
@@ -398,11 +397,16 @@ struct BrushBehavior {
     kTiltXAndY,
   };
 
-  // A binary operation for combining two values in a `BinaryOpNode`.
+  // A binary operation for combining two values in a `BinaryOpNode`. Unless
+  // otherwise specified for a particular operator, the result will be null
+  // (i.e. undefined) if either input value is null.
+  //
   // LINT.IfChange(binary_op)
   enum class BinaryOp {
-    kProduct,  // A * B, or null if either is null
-    kSum,      // A + B, or null if either is null
+    kProduct,  // A * B
+    kSum,      // A + B
+    kMin,      // min(A, B)
+    kMax,      // max(A, B)
   };
   // LINT.ThenChange(
   //   fuzz_domains.cc:binary_op,

@@ -51,7 +51,6 @@ bool IsValidBrushPaintTextureOrigin(BrushPaint::TextureOrigin mapping) {
 bool IsValidBrushPaintTextureSizeUnit(BrushPaint::TextureSizeUnit size_unit) {
   switch (size_unit) {
     case BrushPaint::TextureSizeUnit::kBrushSize:
-    case BrushPaint::TextureSizeUnit::kStrokeSize:
     case BrushPaint::TextureSizeUnit::kStrokeCoordinates:
       return true;
   }
@@ -95,51 +94,6 @@ bool IsValidBrushPaintSelfOverlap(BrushPaint::SelfOverlap self_overlap) {
       return true;
   }
   return false;
-}
-
-absl::Status ValidateBrushPaintTextureKeyframe(
-    BrushPaint::TextureKeyframe keyframe) {
-  if (!(keyframe.progress >= 0.f && keyframe.progress <= 1.f)) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`BrushPaint::TextureKeyframe::progress` must be a value in the "
-        "interval [0, 1]. Got %f",
-        keyframe.progress));
-  }
-  if (keyframe.size.has_value()) {
-    if (!std::isfinite(keyframe.size->x) || !std::isfinite(keyframe.size->y) ||
-        keyframe.size->x <= 0 || keyframe.size->y <= 0) {
-      return absl::InvalidArgumentError(
-          absl::StrFormat("`BrushPaint::TextureKeyframe::size` components must "
-                          "be finite and greater than zero. Got %v",
-                          *keyframe.size));
-    }
-  }
-  if (keyframe.offset.has_value()) {
-    if (!(keyframe.offset->x >= 0.0f && keyframe.offset->x <= 1.0f &&
-          keyframe.offset->y >= 0.0f && keyframe.offset->y <= 1.0f)) {
-      return absl::InvalidArgumentError(
-          absl::StrFormat("`BrushPaint::TextureKeyframe::offset` components "
-                          "must values in the interval [0, 1]. Got %v",
-                          *keyframe.offset));
-    }
-  }
-  if (keyframe.rotation.has_value()) {
-    if (!std::isfinite(keyframe.rotation->ValueInRadians())) {
-      return absl::InvalidArgumentError(
-          absl::StrFormat("`BrushPaint::TextureKeyframe::rotation` must be "
-                          "finite. Got %v",
-                          *keyframe.rotation));
-    }
-  }
-  if (keyframe.opacity.has_value()) {
-    if (!(*keyframe.opacity >= 0.0f && *keyframe.opacity <= 1.0f)) {
-      return absl::InvalidArgumentError(absl::StrFormat(
-          "`BrushPaint::TextureKeyframe::opacity` must be a value in the "
-          "interval [0, 1]. Got %f",
-          *keyframe.opacity));
-    }
-  }
-  return absl::OkStatus();
 }
 
 }  // namespace
@@ -191,32 +145,6 @@ absl::Status ValidateBrushPaintTextureLayer(
                         "Got %v",
                         layer.rotation));
   }
-  if (!(layer.size_jitter.x >= 0.0f && layer.size_jitter.x <= layer.size.x &&
-        layer.size_jitter.y >= 0.0f && layer.size_jitter.y <= layer.size.y)) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`BrushPaint::TextureLayer::size_jitter` must be "
-        "smaller or equal to `BrushPaint::TextureLayer::size`. Got %v",
-        layer.size_jitter));
-  }
-  if (!(layer.offset_jitter.x >= 0.0f && layer.offset_jitter.x <= 1.0f &&
-        layer.offset_jitter.y >= 0.0f && layer.offset_jitter.y <= 1.0f)) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`BrushPaint::TextureLayer::offset_jitter` must be in the "
-        "interval [0, 1]. Got %v",
-        layer.offset_jitter));
-  }
-  if (!std::isfinite(layer.rotation_jitter.ValueInRadians())) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`BrushPaint::TextureLayer::rotation_jitter` must be finite. "
-        "Got %v",
-        layer.rotation_jitter));
-  }
-  if (!(layer.opacity >= 0.0f && layer.opacity <= 1.0f)) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`BrushPaint::TextureLayer::opacity` must be in the interval [0, 1]. "
-        "Got %v",
-        layer.opacity));
-  }
   if (layer.animation_frames <= 0 || layer.animation_frames > (1 << 24)) {
     return absl::InvalidArgumentError(absl::StrCat(
         "`BrushPaint::TextureLayer::animation_frames` must be in "
@@ -251,12 +179,6 @@ absl::Status ValidateBrushPaintTextureLayer(
         "`BrushPaint::TextureLayer::animation_duration` must be "
         "a whole number of milliseconds in the interval [1, 2^24]. Got ",
         layer.animation_duration));
-  }
-  for (const BrushPaint::TextureKeyframe& keyframe : layer.keyframes) {
-    if (auto status = ValidateBrushPaintTextureKeyframe(keyframe);
-        !status.ok()) {
-      return status;
-    }
   }
   if (!IsValidBrushPaintBlendMode(layer.blend_mode)) {
     return absl::InvalidArgumentError(
@@ -385,8 +307,6 @@ std::string ToFormattedString(BrushPaint::TextureSizeUnit texture_size_unit) {
   switch (texture_size_unit) {
     case BrushPaint::TextureSizeUnit::kBrushSize:
       return "kBrushSize";
-    case BrushPaint::TextureSizeUnit::kStrokeSize:
-      return "kStrokeSize";
     case BrushPaint::TextureSizeUnit::kStrokeCoordinates:
       return "kStrokeCoordinates";
   }
@@ -436,26 +356,6 @@ std::string ToFormattedString(BrushPaint::BlendMode blend_mode) {
   return absl::StrCat("BlendMode(", static_cast<int>(blend_mode), ")");
 }
 
-std::string ToFormattedString(const BrushPaint::TextureKeyframe& keyframe) {
-  std::string formatted =
-      absl::StrCat("TextureKeyframe{progress=", keyframe.progress);
-  if (keyframe.size.has_value()) {
-    absl::StrAppend(&formatted, ", size=", *keyframe.size);
-  }
-  if (keyframe.offset.has_value()) {
-    absl::StrAppend(&formatted, ", offset=", *keyframe.offset);
-  }
-  if (keyframe.rotation.has_value()) {
-    absl::StrAppend(&formatted, ", rotation=", *keyframe.rotation);
-  }
-  if (keyframe.opacity.has_value()) {
-    absl::StrAppend(&formatted, ", opacity=", *keyframe.opacity);
-  }
-  formatted.push_back('}');
-
-  return formatted;
-}
-
 std::string ToFormattedString(const BrushPaint::TextureLayer& texture_layer) {
   return absl::StrCat(
       "TextureLayer{", "client_texture_id=", texture_layer.client_texture_id,
@@ -466,15 +366,10 @@ std::string ToFormattedString(const BrushPaint::TextureLayer& texture_layer) {
       ", wrap_y=", ToFormattedString(texture_layer.wrap_y),
       ", size=", texture_layer.size, ", offset=", texture_layer.offset,
       ", rotation=", texture_layer.rotation,
-      ", size_jitter=", texture_layer.size_jitter,
-      ", offset_jitter=", texture_layer.offset_jitter,
-      ", rotation_jitter=", texture_layer.rotation_jitter,
-      ", opacity=", texture_layer.opacity,
       ", animation_frames=", texture_layer.animation_frames,
       ", animation_rows=", texture_layer.animation_rows,
       ", animation_columns=", texture_layer.animation_columns,
       ", animation_duration=", texture_layer.animation_duration,
-      ", keyframes={", absl::StrJoin(texture_layer.keyframes, ", "), "}",
       ", blend_mode=", ToFormattedString(texture_layer.blend_mode), "}");
 }
 

@@ -151,8 +151,6 @@ std::optional<float> GetSourceValue(
       return input.traveled_distance / brush_size;
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return input.elapsed_time.ToSeconds();
-    case BrushBehavior::Source::kTimeOfInputInMillis:
-      return input.elapsed_time.ToMillis();
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return GetPredictedDistanceTraveledInStrokeUnits(input_modeler_state,
@@ -160,16 +158,12 @@ std::optional<float> GetSourceValue(
              brush_size;
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
       return GetPredictedTimeElapsed(input_modeler_state, input).ToSeconds();
-    case BrushBehavior::Source::kPredictedTimeElapsedInMillis:
-      return GetPredictedTimeElapsed(input_modeler_state, input).ToMillis();
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
       return (input_modeler_state.complete_traveled_distance -
               input.traveled_distance) /
              brush_size;
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
       return GetTimeSinceInput(input_modeler_state, input).ToSeconds();
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
-      return GetTimeSinceInput(input_modeler_state, input).ToMillis();
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return input.acceleration.Magnitude() / brush_size;
@@ -486,16 +480,23 @@ void ProcessBehaviorNodeImpl(const BrushBehavior::BinaryOpNode& node,
   context.stack.pop_back();
   float first_input = context.stack.back();
   float* result = &context.stack.back();
+  if (IsNullBehaviorNodeValue(first_input) ||
+      IsNullBehaviorNodeValue(second_input)) {
+    *result = kNullBehaviorNodeValue;
+    return;
+  }
   switch (node.operation) {
     case BrushBehavior::BinaryOp::kProduct:
-      // kNullBehaviorNodeValue is NaN, so if either input value is null (NaN),
-      // the result will be null (NaN).
       *result = first_input * second_input;
       break;
     case BrushBehavior::BinaryOp::kSum:
-      // kNullBehaviorNodeValue is NaN, so if either input value is null (NaN),
-      // the result will be null (NaN).
       *result = first_input + second_input;
+      break;
+    case BrushBehavior::BinaryOp::kMin:
+      *result = std::min(first_input, second_input);
+      break;
+    case BrushBehavior::BinaryOp::kMax:
+      *result = std::max(first_input, second_input);
       break;
   }
   // If any of the above operations resulted in a non-finite value
@@ -780,8 +781,8 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
         (tip_state.rotation + modifiers.rotation_offset).NormalizedAboutZero();
   }
   if (modifiers.corner_rounding_offset != 0) {
-    tip_state.percent_radius = std::clamp(
-        tip_state.percent_radius + modifiers.corner_rounding_offset, 0.f, 1.f);
+    tip_state.corner_rounding = std::clamp(
+        tip_state.corner_rounding + modifiers.corner_rounding_offset, 0.f, 1.f);
   }
   if (modifiers.texture_animation_progress_offset != 0) {
     tip_state.texture_animation_progress_offset =
@@ -829,7 +830,7 @@ BrushTipState CreateTipState(Point position, Vec velocity,
       .position = position,
       .width = brush_size * brush_tip.scale.x,
       .height = brush_size * brush_tip.scale.y,
-      .percent_radius = brush_tip.corner_rounding,
+      .corner_rounding = brush_tip.corner_rounding,
       .rotation = brush_tip.rotation.NormalizedAboutZero(),
       .slant = brush_tip.slant,
       .pinch = brush_tip.pinch,

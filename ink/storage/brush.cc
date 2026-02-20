@@ -14,6 +14,7 @@
 
 #include "ink/storage/brush.h"
 
+#include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -56,6 +57,10 @@ proto::BrushBehavior::BinaryOp EncodeBrushBehaviorBinaryOp(
       return proto::BrushBehavior::BINARY_OP_PRODUCT;
     case BrushBehavior::BinaryOp::kSum:
       return proto::BrushBehavior::BINARY_OP_SUM;
+    case BrushBehavior::BinaryOp::kMin:
+      return proto::BrushBehavior::BINARY_OP_MIN;
+    case BrushBehavior::BinaryOp::kMax:
+      return proto::BrushBehavior::BINARY_OP_MAX;
   }
   return proto::BrushBehavior::BINARY_OP_UNSPECIFIED;
 }
@@ -67,6 +72,10 @@ absl::StatusOr<BrushBehavior::BinaryOp> DecodeBrushBehaviorBinaryOp(
       return BrushBehavior::BinaryOp::kProduct;
     case proto::BrushBehavior::BINARY_OP_SUM:
       return BrushBehavior::BinaryOp::kSum;
+    case proto::BrushBehavior::BINARY_OP_MIN:
+      return BrushBehavior::BinaryOp::kMin;
+    case proto::BrushBehavior::BINARY_OP_MAX:
+      return BrushBehavior::BinaryOp::kMax;
     default:
       return absl::InvalidArgumentError(absl::StrCat(
           "invalid ink.proto.BrushBehavior.BinaryOp value: ", binary_op_proto));
@@ -167,23 +176,17 @@ proto::BrushBehavior::Source EncodeBrushBehaviorSource(
           SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE;
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return proto::BrushBehavior::SOURCE_TIME_OF_INPUT_IN_SECONDS;
-    case BrushBehavior::Source::kTimeOfInputInMillis:
-      return proto::BrushBehavior::SOURCE_TIME_OF_INPUT_IN_MILLIS;
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return proto::BrushBehavior::
           SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE;
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
       return proto::BrushBehavior::SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS;
-    case BrushBehavior::Source::kPredictedTimeElapsedInMillis:
-      return proto::BrushBehavior::SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS;
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
       return proto::BrushBehavior::
           SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE;
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
       return proto::BrushBehavior::SOURCE_TIME_SINCE_INPUT_IN_SECONDS;
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
-      return proto::BrushBehavior::SOURCE_TIME_SINCE_INPUT_IN_MILLIS;
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return proto::BrushBehavior::
@@ -245,8 +248,17 @@ proto::BrushBehavior::Source EncodeBrushBehaviorSource(
   return proto::BrushBehavior::SOURCE_UNSPECIFIED;
 }
 
+void ConvertFromMillisToSeconds(std::array<float, 2>& source_value_range) {
+  source_value_range[0] /= 1000;
+  source_value_range[1] /= 1000;
+}
+
+// Decodes a proto `Source` enum to a native `Source` enum. If the proto enum is
+// using deprecated units, this will mutate `source_value_range` to apply a
+// scaling factor to the units of the returned native enum.
 absl::StatusOr<BrushBehavior::Source> DecodeBrushBehaviorSource(
-    proto::BrushBehavior::Source source_proto) {
+    proto::BrushBehavior::Source source_proto,
+    std::array<float, 2>& source_value_range) {
   // NOLINTBEGIN(whitespace/line_length)
   switch (source_proto) {
     case proto::BrushBehavior::SOURCE_NORMALIZED_PRESSURE:
@@ -280,7 +292,8 @@ absl::StatusOr<BrushBehavior::Source> DecodeBrushBehaviorSource(
     case proto::BrushBehavior::SOURCE_TIME_OF_INPUT_IN_SECONDS:
       return BrushBehavior::Source::kTimeOfInputInSeconds;
     case proto::BrushBehavior::SOURCE_TIME_OF_INPUT_IN_MILLIS:
-      return BrushBehavior::Source::kTimeOfInputInMillis;
+      ConvertFromMillisToSeconds(source_value_range);
+      return BrushBehavior::Source::kTimeOfInputInSeconds;
     case proto::BrushBehavior::
         SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE:
       return BrushBehavior::Source::
@@ -288,14 +301,16 @@ absl::StatusOr<BrushBehavior::Source> DecodeBrushBehaviorSource(
     case proto::BrushBehavior::SOURCE_PREDICTED_TIME_ELAPSED_IN_SECONDS:
       return BrushBehavior::Source::kPredictedTimeElapsedInSeconds;
     case proto::BrushBehavior::SOURCE_PREDICTED_TIME_ELAPSED_IN_MILLIS:
-      return BrushBehavior::Source::kPredictedTimeElapsedInMillis;
+      ConvertFromMillisToSeconds(source_value_range);
+      return BrushBehavior::Source::kPredictedTimeElapsedInSeconds;
     case proto::BrushBehavior::
         SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE:
       return BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize;
     case proto::BrushBehavior::SOURCE_TIME_SINCE_INPUT_IN_SECONDS:
       return BrushBehavior::Source::kTimeSinceInputInSeconds;
     case proto::BrushBehavior::SOURCE_TIME_SINCE_INPUT_IN_MILLIS:
-      return BrushBehavior::Source::kTimeSinceInputInMillis;
+      ConvertFromMillisToSeconds(source_value_range);
+      return BrushBehavior::Source::kTimeSinceInputInSeconds;
     case proto::BrushBehavior::SOURCE_DIRECTION_IN_RADIANS:
       return BrushBehavior::Source::kDirectionInRadians;
     case proto::BrushBehavior::SOURCE_DIRECTION_ABOUT_ZERO_IN_RADIANS:
@@ -877,8 +892,12 @@ void EncodeBrushBehaviorNode(const BrushBehavior::PolarTargetNode& node,
 
 absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorSourceNode(
     const proto::BrushBehavior::SourceNode& node_proto) {
+  std::array<float, 2> source_value_range = {
+      node_proto.source_value_range_start(),
+      node_proto.source_value_range_end()};
+
   absl::StatusOr<BrushBehavior::Source> source =
-      DecodeBrushBehaviorSource(node_proto.source());
+      DecodeBrushBehaviorSource(node_proto.source(), source_value_range);
   if (!source.ok()) return source.status();
 
   absl::StatusOr<BrushBehavior::OutOfRange> source_out_of_range_behavior =
@@ -890,8 +909,7 @@ absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorSourceNode(
   return BrushBehavior::SourceNode{
       .source = *source,
       .source_out_of_range_behavior = *source_out_of_range_behavior,
-      .source_value_range = {node_proto.source_value_range_start(),
-                             node_proto.source_value_range_end()},
+      .source_value_range = source_value_range,
   };
 }
 
@@ -1099,8 +1117,6 @@ proto::BrushPaint::TextureLayer::SizeUnit EncodeBrushPaintSizeUnit(
       return proto::BrushPaint::TextureLayer::SIZE_UNIT_BRUSH_SIZE;
     case BrushPaint::TextureSizeUnit::kStrokeCoordinates:
       return proto::BrushPaint::TextureLayer::SIZE_UNIT_STROKE_COORDINATES;
-    case BrushPaint::TextureSizeUnit::kStrokeSize:
-      return proto::BrushPaint::TextureLayer::SIZE_UNIT_UNSPECIFIED;
   }
   return proto::BrushPaint::TextureLayer::SIZE_UNIT_UNSPECIFIED;
 }
@@ -1230,7 +1246,6 @@ void EncodeBrushPaintTextureLayer(
   layer_proto_out.set_offset_x(layer.offset.x);
   layer_proto_out.set_offset_y(layer.offset.y);
   layer_proto_out.set_rotation_in_radians(layer.rotation.ValueInRadians());
-  layer_proto_out.set_opacity(layer.opacity);
   layer_proto_out.set_blend_mode(EncodeBrushPaintBlendMode(layer.blend_mode));
 }
 
@@ -1277,7 +1292,6 @@ absl::StatusOr<BrushPaint::TextureLayer> DecodeBrushPaintTextureLayer(
       .size = {layer_proto.size_x(), layer_proto.size_y()},
       .offset = {layer_proto.offset_x(), layer_proto.offset_y()},
       .rotation = Angle::Radians(layer_proto.rotation_in_radians()),
-      .opacity = layer_proto.opacity(),
       .blend_mode = *blend_mode};
   if (absl::Status status =
           brush_internal::ValidateBrushPaintTextureLayer(texture_layer);

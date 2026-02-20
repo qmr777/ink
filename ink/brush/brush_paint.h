@@ -78,17 +78,6 @@ struct BrushPaint {
   enum class TextureSizeUnit {
     // As multiples of brush size.
     kBrushSize,
-    // As multiples of the stroke "size".
-    //
-    // This has different meanings depending on the value of `TextureMapping`
-    // for the given texture.
-    //   * For `kTiling` textures, the stroke size is equal to the dimensions of
-    //     the XY bounding rectangle of the mesh.
-    //   * For `kWinding` textures, the stroke size components are given by
-    //       x: stroke width, which may change over the course of the stroke if
-    //          behaviors affect the tip geometry.
-    //       y: the total distance traveled by the stroke.
-    kStrokeSize,
     // In the same units as the provided `StrokeInput` position.
     kStrokeCoordinates,
   };
@@ -214,26 +203,6 @@ struct BrushPaint {
   //   fuzz_domains.cc:blend_mode,
   // )
 
-  // Keyframe values used by `TextureLayer` below.
-  struct TextureKeyframe {
-    // Percentage value in the range [0, 1] indicating animation progress.
-    float progress;
-
-    // Values of texture transform attributes to apply for this keyframe. If not
-    // `nullopt`, these will override `TextureLayer::size`, `::offset`, and
-    // `::rotation`.
-    std::optional<Vec> size;
-    std::optional<Vec> offset;
-    std::optional<Angle> rotation;
-
-    // Value of texture layer opacity to apply for this keyframe. This value
-    // will override `TextureLayer::opacity`.
-    std::optional<float> opacity;
-
-    friend bool operator==(const TextureKeyframe&,
-                           const TextureKeyframe&) = default;
-  };
-
   struct TextureLayer {
     // String id that will be used by renderers to retrieve the color texture.
     std::string client_texture_id;
@@ -253,17 +222,6 @@ struct BrushPaint {
     // carried out about the center of the texture's first repetition along both
     // axes.
     Angle rotation = Angle();
-
-    // Transform "jitter" properties below specify the magnitude of random
-    // offset that is applied to `size`, `offset`, and `rotation` on a
-    // per-stroke basis. Each component of `size_jitter` must be less than or
-    // equal to that of `size`.
-    Vec size_jitter = {0, 0};
-    Vec offset_jitter = {0, 0};
-    Angle rotation_jitter = Angle();
-
-    // Overall layer opacity.
-    float opacity = 1;
 
     // The number of animation frames in this texture. Must be between 1 and
     // 2^24 (inclusive). If 1 (the default), then animation is effectively
@@ -287,12 +245,6 @@ struct BrushPaint {
     // (its default value) because that indicates that animation is disabled.
     // Must be a whole number of milliseconds between 1 and 2^24 (inclusive).
     absl::Duration animation_duration = absl::Seconds(1);
-
-    // Animation keyframes; currently unused.
-    //
-    // TODO: b/373649343 - Decide if/how this should coexist with
-    // `animation_frames` above.
-    std::vector<TextureKeyframe> keyframes;
 
     // The rule by which the texture layers up to and including this one are
     // combined with the subsequent layer.
@@ -381,7 +333,6 @@ std::string ToFormattedString(BrushPaint::TextureOrigin texture_origin);
 std::string ToFormattedString(BrushPaint::TextureSizeUnit texture_size_unit);
 std::string ToFormattedString(BrushPaint::TextureWrap texture_wrap);
 std::string ToFormattedString(BrushPaint::BlendMode blend_mode);
-std::string ToFormattedString(const BrushPaint::TextureKeyframe& keyframe);
 std::string ToFormattedString(const BrushPaint::TextureLayer& texture_layer);
 std::string ToFormattedString(BrushPaint::SelfOverlap self_overlap);
 std::string ToFormattedString(const BrushPaint& paint);
@@ -414,11 +365,6 @@ void AbslStringify(Sink& sink, BrushPaint::BlendMode blend_mode) {
 }
 
 template <typename Sink>
-void AbslStringify(Sink& sink, const BrushPaint::TextureKeyframe& key_frame) {
-  sink.Append(brush_internal::ToFormattedString(key_frame));
-}
-
-template <typename Sink>
 void AbslStringify(Sink& sink, const BrushPaint::TextureLayer& texture_layer) {
   sink.Append(brush_internal::ToFormattedString(texture_layer));
 }
@@ -434,18 +380,10 @@ void AbslStringify(Sink& sink, const BrushPaint& paint) {
 }
 
 template <typename H>
-H AbslHashValue(H h, const BrushPaint::TextureKeyframe& keyframe) {
-  return H::combine(std::move(h), keyframe.progress, keyframe.size,
-                    keyframe.offset, keyframe.rotation, keyframe.opacity);
-}
-
-template <typename H>
 H AbslHashValue(H h, const BrushPaint::TextureLayer& layer) {
   return H::combine(std::move(h), layer.client_texture_id, layer.mapping,
                     layer.origin, layer.size_unit, layer.wrap_x, layer.wrap_y,
-                    layer.size, layer.offset, layer.rotation, layer.size_jitter,
-                    layer.offset_jitter, layer.rotation_jitter, layer.opacity,
-                    layer.keyframes, layer.blend_mode);
+                    layer.size, layer.offset, layer.rotation, layer.blend_mode);
 }
 
 template <typename H>

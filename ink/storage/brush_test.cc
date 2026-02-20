@@ -53,10 +53,13 @@ namespace {
 using ::absl_testing::IsOk;
 using ::absl_testing::IsOkAndHolds;
 using ::absl_testing::StatusIs;
+using ::testing::AllOf;
 using ::testing::ElementsAre;
+using ::testing::Field;
 using ::testing::HasSubstr;
 using ::testing::IsNull;
 using ::testing::SizeIs;
+using ::testing::VariantWith;
 
 constexpr absl::string_view kTestTextureId1 = "test-texture-one";
 constexpr absl::string_view kTestTextureId2 = "test-texture-two";
@@ -422,7 +425,6 @@ TEST(BrushTest, EncodeBrushWithoutTextureMap) {
   layer_proto->set_offset_x(0.f);
   layer_proto->set_offset_y(0.f);
   layer_proto->set_rotation_in_radians(0.f);
-  layer_proto->set_opacity(1.f);
   layer_proto->set_blend_mode(
       proto::BrushPaint::TextureLayer::BLEND_MODE_SRC_IN);
   paint_proto->set_self_overlap(proto::BrushPaint::SELF_OVERLAP_DISCARD);
@@ -510,7 +512,6 @@ TEST(BrushTest, EncodeBrushWithTextureMap) {
   texture_layer_proto->set_offset_x(0.f);
   texture_layer_proto->set_offset_y(0.f);
   texture_layer_proto->set_rotation_in_radians(0.f);
-  texture_layer_proto->set_opacity(1.f);
   texture_layer_proto->set_blend_mode(
       proto::BrushPaint::TextureLayer::BLEND_MODE_SRC_IN);
   paint_proto->set_self_overlap(proto::BrushPaint::SELF_OVERLAP_ACCUMULATE);

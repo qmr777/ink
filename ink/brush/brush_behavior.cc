@@ -56,14 +56,11 @@ bool IsValidBehaviorSource(BrushBehavior::Source source) {
     case BrushBehavior::Source::kNormalizedDirectionY:
     case BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeOfInputInSeconds:
-    case BrushBehavior::Source::kTimeOfInputInMillis:
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
-    case BrushBehavior::Source::kPredictedTimeElapsedInMillis:
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
     case BrushBehavior::Source::
@@ -98,10 +95,9 @@ absl::Status ValidateSourceAndOutOfRangeCombination(
     BrushBehavior::Source source, BrushBehavior::OutOfRange out_of_range) {
   switch (source) {
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
       if (out_of_range != BrushBehavior::OutOfRange::kClamp) {
         return absl::InvalidArgumentError(
-            "`Source::kTimeSinceInput*` must only be used with "
+            "`Source::kTimeSinceInputInSeconds` must only be used with "
             "`source_out_of_range_behavior` of `kClamp`.");
       }
       break;
@@ -120,11 +116,9 @@ absl::Status ValidateSourceAndOutOfRangeCombination(
     case BrushBehavior::Source::kNormalizedDirectionY:
     case BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeOfInputInSeconds:
-    case BrushBehavior::Source::kTimeOfInputInMillis:
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
-    case BrushBehavior::Source::kPredictedTimeElapsedInMillis:
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
@@ -221,6 +215,8 @@ bool IsValidBehaviorBinaryOp(BrushBehavior::BinaryOp operation) {
   switch (operation) {
     case BrushBehavior::BinaryOp::kProduct:
     case BrushBehavior::BinaryOp::kSum:
+    case BrushBehavior::BinaryOp::kMin:
+    case BrushBehavior::BinaryOp::kMax:
       return true;
   }
   return false;
@@ -509,21 +505,15 @@ std::string ToFormattedString(BrushBehavior::Source source) {
       return "kDistanceTraveledInMultiplesOfBrushSize";
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return "kTimeOfInputInSeconds";
-    case BrushBehavior::Source::kTimeOfInputInMillis:
-      return "kTimeOfInputInMillis";
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return "kPredictedDistanceTraveledInMultiplesOfBrushSize";
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
       return "kPredictedTimeElapsedInSeconds";
-    case BrushBehavior::Source::kPredictedTimeElapsedInMillis:
-      return "kPredictedTimeElapsedInMillis";
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
       return "kDistanceRemainingInMultiplesOfBrushSize";
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
       return "kTimeSinceInputInSeconds";
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
-      return "kTimeSinceInputInMillis";
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return "kAccelerationInMultiplesOfBrushSizePerSecondSquared";
@@ -677,6 +667,10 @@ std::string ToFormattedString(BrushBehavior::BinaryOp operation) {
       return "kProduct";
     case BrushBehavior::BinaryOp::kSum:
       return "kSum";
+    case BrushBehavior::BinaryOp::kMin:
+      return "kMin";
+    case BrushBehavior::BinaryOp::kMax:
+      return "kMax";
   }
   return absl::StrCat("BinaryOp(", static_cast<int>(operation), ")");
 }

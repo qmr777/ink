@@ -69,23 +69,17 @@ TEST(BrushBehaviorTest, StringifySource) {
             "kDistanceTraveledInMultiplesOfBrushSize");
   EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kTimeOfInputInSeconds),
             "kTimeOfInputInSeconds");
-  EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kTimeOfInputInMillis),
-            "kTimeOfInputInMillis");
   EXPECT_EQ(absl::StrCat(BrushBehavior::Source::
                              kPredictedDistanceTraveledInMultiplesOfBrushSize),
             "kPredictedDistanceTraveledInMultiplesOfBrushSize");
   EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kPredictedTimeElapsedInSeconds),
             "kPredictedTimeElapsedInSeconds");
-  EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kPredictedTimeElapsedInMillis),
-            "kPredictedTimeElapsedInMillis");
   EXPECT_EQ(
       absl::StrCat(
           BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize),
       "kDistanceRemainingInMultiplesOfBrushSize");
   EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kTimeSinceInputInSeconds),
             "kTimeSinceInputInSeconds");
-  EXPECT_EQ(absl::StrCat(BrushBehavior::Source::kTimeSinceInputInMillis),
-            "kTimeSinceInputInMillis");
   EXPECT_EQ(
       absl::StrCat(BrushBehavior::Source::
                        kAccelerationInMultiplesOfBrushSizePerSecondSquared),
@@ -235,6 +229,8 @@ TEST(BrushBehaviorTest, StringifyOptionalInputProperty) {
 TEST(BrushBehaviorTest, StringifyBinaryOp) {
   EXPECT_EQ(absl::StrCat(BrushBehavior::BinaryOp::kProduct), "kProduct");
   EXPECT_EQ(absl::StrCat(BrushBehavior::BinaryOp::kSum), "kSum");
+  EXPECT_EQ(absl::StrCat(BrushBehavior::BinaryOp::kMin), "kMin");
+  EXPECT_EQ(absl::StrCat(BrushBehavior::BinaryOp::kMax), "kMax");
   EXPECT_EQ(absl::StrCat(static_cast<BrushBehavior::BinaryOp>(147)),
             "BinaryOp(147)");
 }
@@ -733,7 +729,7 @@ TEST(BrushBehaviorTest, ValidateSourceNode) {
   });
   EXPECT_EQ(status.code(), absl::StatusCode::kInvalidArgument);
   EXPECT_THAT(status.message(),
-              HasSubstr("kTimeSinceInput*` must only be used with "
+              HasSubstr("kTimeSinceInputInSeconds` must only be used with "
                         "`source_out_of_range_behavior` of `kClamp"));
 
   status = brush_internal::ValidateBrushBehaviorNode(BrushBehavior::SourceNode{

@@ -128,6 +128,8 @@ Domain<BrushBehavior::BinaryOp> ArbitraryBrushBehaviorBinaryOp() {
   return ElementOf({
       BrushBehavior::BinaryOp::kProduct,
       BrushBehavior::BinaryOp::kSum,
+      BrushBehavior::BinaryOp::kMin,
+      BrushBehavior::BinaryOp::kMax,
   });
 }
 // LINT.ThenChange(brush_behavior.h:binary_op)
@@ -175,7 +177,6 @@ Domain<BrushBehavior::OutOfRange> ValidBrushBehaviorOutOfRangeForSource(
     BrushBehavior::Source source) {
   switch (source) {
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
-    case BrushBehavior::Source::kTimeSinceInputInMillis:
       return Just(BrushBehavior::OutOfRange::kClamp);
     default:
       return ArbitraryBrushBehaviorOutOfRange();
@@ -201,13 +202,10 @@ Domain<BrushBehavior::Source> ArbitraryBrushBehaviorSource() {
       BrushBehavior::Source::kNormalizedDirectionY,
       BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize,
       BrushBehavior::Source::kTimeOfInputInSeconds,
-      BrushBehavior::Source::kTimeOfInputInMillis,
       BrushBehavior::Source::kPredictedDistanceTraveledInMultiplesOfBrushSize,
       BrushBehavior::Source::kPredictedTimeElapsedInSeconds,
-      BrushBehavior::Source::kPredictedTimeElapsedInMillis,
       BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize,
       BrushBehavior::Source::kTimeSinceInputInSeconds,
-      BrushBehavior::Source::kTimeSinceInputInMillis,
       BrushBehavior::Source::
           kAccelerationInMultiplesOfBrushSizePerSecondSquared,
       BrushBehavior::Source::
@@ -645,42 +643,21 @@ Domain<BrushPaint::BlendMode> ArbitraryBrushPaintBlendMode() {
 }
 // LINT.ThenChange(brush_paint.h:blend_mode)
 
-Domain<BrushPaint::TextureKeyframe> ValidBrushPaintTextureKeyframe() {
-  return StructOf<BrushPaint::TextureKeyframe>(
-      InRange<float>(0.f, 1.f),
-      OptionalOf(StructOf<Vec>(FinitePositiveFloat(), FinitePositiveFloat())),
-      OptionalOf(
-          StructOf<Vec>(InRange<float>(0.f, 1.f), InRange<float>(0.f, 1.f))),
-      OptionalOf(FiniteAngle()), OptionalOf(InRange(0.f, 1.f)));
-}
-
 Domain<BrushPaint::TextureLayer>
 ValidBrushPaintTextureLayerWithMappingAndAnimationFrames(
     BrushPaint::TextureMapping mapping, int animation_frames,
     int animation_rows, int animation_columns,
     absl::Duration animation_duration, DomainVariant variant) {
   auto texture_layer = [=](Vec size) {
-    auto size_jitter_domain =
-        StructOf<Vec>(InRange<float>(0.f, size.x), InRange<float>(0.f, size.y));
-    auto offset_jitter_domain =
-        StructOf<Vec>(InRange<float>(0.f, 1.f), InRange<float>(0.f, 1.f));
-    auto rotation_jitter_domain = FiniteAngle();
     auto animation_frames_domain = Just(animation_frames);
     auto animation_rows_domain = Just(animation_rows);
     auto animation_columns_domain = Just(animation_columns);
     auto animation_duration_domain = Just(animation_duration);
-    auto keyframes_domain = VectorOf(ValidBrushPaintTextureKeyframe());
     if (variant == DomainVariant::kValidAndSerializable) {
-      size_jitter_domain =
-          StructOf<Vec>(InRange<float>(0.0f, 0.0f), InRange<float>(0.0f, 0.0f));
-      offset_jitter_domain =
-          StructOf<Vec>(InRange<float>(0.0f, 0.0f), InRange<float>(0.0f, 0.0f));
-      rotation_jitter_domain = Just(Angle());
       animation_frames_domain = Just(1);
       animation_rows_domain = Just(1);
       animation_columns_domain = Just(1);
       animation_duration_domain = Just(absl::Seconds(1));
-      keyframes_domain = VectorOf(ValidBrushPaintTextureKeyframe()).WithSize(0);
     }
     return StructOf<BrushPaint::TextureLayer>(
         Arbitrary<std::string>(), Just(mapping),
@@ -688,10 +665,8 @@ ValidBrushPaintTextureLayerWithMappingAndAnimationFrames(
         ArbitraryBrushPaintTextureSizeUnit(), ArbitraryBrushPaintTextureWrap(),
         ArbitraryBrushPaintTextureWrap(), Just(size),
         StructOf<Vec>(InRange<float>(0.f, 1.f), InRange<float>(0.f, 1.f)),
-        FiniteAngle(), size_jitter_domain, offset_jitter_domain,
-        rotation_jitter_domain, InRange(0.f, 1.f), animation_frames_domain,
-        animation_rows_domain, animation_columns_domain,
-        animation_duration_domain, keyframes_domain,
+        FiniteAngle(), animation_frames_domain, animation_rows_domain,
+        animation_columns_domain, animation_duration_domain,
         ArbitraryBrushPaintBlendMode());
   };
   return FlatMap(texture_layer,

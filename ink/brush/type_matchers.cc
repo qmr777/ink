@@ -316,20 +316,6 @@ MATCHER(BrushTipPointwiseEqMatcher, "") {
                             result_listener);
 }
 
-MATCHER(BrushPaintTextureKeyframeEqMatcher, "") {
-  return ExplainMatchResult(AllOf(Field(&BrushPaint::TextureKeyframe::progress,
-                                        Eq(std::get<1>(arg).progress)),
-                                  Field(&BrushPaint::TextureKeyframe::size,
-                                        Eq(std::get<1>(arg).size)),
-                                  Field(&BrushPaint::TextureKeyframe::offset,
-                                        Eq(std::get<1>(arg).offset)),
-                                  Field(&BrushPaint::TextureKeyframe::rotation,
-                                        Eq(std::get<1>(arg).rotation)),
-                                  Field(&BrushPaint::TextureKeyframe::opacity,
-                                        Eq(std::get<1>(arg).opacity))),
-                            std::get<0>(arg), result_listener);
-}
-
 MATCHER_P(BrushPaintTextureLayerEqMatcher, expected,
           absl::StrCat(negation ? "doesn't equal" : "equals",
                        " BrushPaintTextureLayer (expected: ",
@@ -345,16 +331,6 @@ MATCHER_P(BrushPaintTextureLayerEqMatcher, expected,
             Field(&BrushPaint::TextureLayer::size, Eq(expected.size)),
             Field(&BrushPaint::TextureLayer::offset, Eq(expected.offset)),
             Field(&BrushPaint::TextureLayer::rotation, Eq(expected.rotation)),
-            Field(&BrushPaint::TextureLayer::size_jitter,
-                  Eq(expected.size_jitter)),
-            Field(&BrushPaint::TextureLayer::offset_jitter,
-                  Eq(expected.offset_jitter)),
-            Field(&BrushPaint::TextureLayer::rotation_jitter,
-                  Eq(expected.rotation_jitter)),
-            Field(&BrushPaint::TextureLayer::opacity, Eq(expected.opacity)),
-            Field("keyframes", &BrushPaint::TextureLayer::keyframes,
-                  Pointwise(BrushPaintTextureKeyframeEqMatcher(),
-                            expected.keyframes)),
             Field(&BrushPaint::TextureLayer::blend_mode,
                   Eq(expected.blend_mode))),
       arg, result_listener);
