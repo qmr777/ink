@@ -99,20 +99,20 @@ struct PolarTargetNodeImplementation {
 
 using BehaviorNodeImplementation =
     std::variant<BrushBehavior::SourceNode, BrushBehavior::ConstantNode,
-                 NoiseNodeImplementation, BrushBehavior::FallbackFilterNode,
-                 BrushBehavior::ToolTypeFilterNode, DampingNodeImplementation,
-                 EasingImplementation, BrushBehavior::BinaryOpNode,
-                 BrushBehavior::InterpolationNode, IntegralNodeImplementation,
-                 TargetNodeImplementation, PolarTargetNodeImplementation>;
+                 NoiseNodeImplementation, BrushBehavior::ToolTypeFilterNode,
+                 DampingNodeImplementation, EasingImplementation,
+                 BrushBehavior::BinaryOpNode, BrushBehavior::InterpolationNode,
+                 IntegralNodeImplementation, TargetNodeImplementation,
+                 PolarTargetNodeImplementation>;
 
 // Holds mutable state for an integral node.
 struct IntegralState {
   // The most recent non-null value (if any) of the input node being integrated.
-  float last_input;
+  float last_input = kNullBehaviorNodeValue;
   // The most recent integral value of the `IntegralNode` (i.e. the running
   // total so far), before being mapped through `integral_value_range` and
   // `integral_out_of_range_behavior`.
-  float last_integral;
+  float last_integral = 0.0f;
 };
 
 // Holds references to stroke data needed by `ProcessBehaviorNode()`, as well as

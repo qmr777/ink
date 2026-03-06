@@ -43,7 +43,7 @@ cc_library(
     srcs = ["angle_jni.cc"],
     tags = ["keep_dep"],
     deps = [
-        "//ink/geometry:angle",
+        ":angle_native",
         "//ink/jni/internal:jni_defines",
     ] + select({
         "@platforms//os:android": [],
@@ -51,6 +51,16 @@ cc_library(
             "@rules_jni//jni",
         ],
     }),
+    alwayslink = 1,
+)
+
+cc_library(
+    name = "angle_native",
+    srcs = ["angle_native.cc"],
+    hdrs = ["angle_native.h"],
+    deps = [
+        "//ink/geometry:angle",
+    ],
     alwayslink = 1,
 )
 

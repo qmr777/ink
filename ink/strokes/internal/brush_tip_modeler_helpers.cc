@@ -80,20 +80,16 @@ std::optional<float> GetTiltY(Angle tilt, Angle orientation) {
 float GetPredictedDistanceTraveledInStrokeUnits(
     const InputModelerState& input_modeler_state,
     const ModeledStrokeInput& input) {
-  return std::max(
-      0.f, input.traveled_distance - input_modeler_state.total_real_distance);
+  return std::max(0.f,
+                  input.traveled_distance -
+                      input_modeler_state.real_input_metrics.traveled_distance);
 }
 
 Duration32 GetPredictedTimeElapsed(const InputModelerState& input_modeler_state,
                                    const ModeledStrokeInput& input) {
   return std::max(
       Duration32::Zero(),
-      input.elapsed_time - input_modeler_state.total_real_elapsed_time);
-}
-
-Duration32 GetTimeSinceInput(const InputModelerState& input_modeler_state,
-                             const ModeledStrokeInput& input) {
-  return input_modeler_state.complete_elapsed_time - input.elapsed_time;
+      input.elapsed_time - input_modeler_state.real_input_metrics.elapsed_time);
 }
 
 // Returns the value of the given `Source` at the given modeled input, or
@@ -151,6 +147,13 @@ std::optional<float> GetSourceValue(
       return input.traveled_distance / brush_size;
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return input.elapsed_time.ToSeconds();
+    case BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds: {
+      Duration32 stroke_end_time =
+          input_modeler_state.inputs_are_finished
+              ? input_modeler_state.full_input_metrics.elapsed_time
+              : input_modeler_state.complete_elapsed_time;
+      return (stroke_end_time - input.elapsed_time).ToSeconds();
+    }
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return GetPredictedDistanceTraveledInStrokeUnits(input_modeler_state,
@@ -159,11 +162,17 @@ std::optional<float> GetSourceValue(
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
       return GetPredictedTimeElapsed(input_modeler_state, input).ToSeconds();
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
-      return (input_modeler_state.complete_traveled_distance -
+      return (input_modeler_state.full_input_metrics.traveled_distance -
               input.traveled_distance) /
              brush_size;
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
-      return GetTimeSinceInput(input_modeler_state, input).ToSeconds();
+      return (input_modeler_state.complete_elapsed_time - input.elapsed_time)
+          .ToSeconds();
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
+      if (!input_modeler_state.inputs_are_finished) return 0.0f;
+      return (input_modeler_state.complete_elapsed_time -
+              input_modeler_state.full_input_metrics.elapsed_time)
+          .ToSeconds();
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return input.acceleration.Magnitude() / brush_size;
@@ -182,76 +191,59 @@ std::optional<float> GetSourceValue(
       return Vec::DotProduct(input.acceleration,
                              input.velocity.AsUnitVec().Orthogonal()) /
              brush_size;
-    case BrushBehavior::Source::kInputSpeedInCentimetersPerSecond:
+    case BrushBehavior::Source::kSpeedInCentimetersPerSecond:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.velocity.Magnitude() *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityXInCentimetersPerSecond:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.velocity.x *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityYInCentimetersPerSecond:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.velocity.y *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kInputDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kDistanceTraveledInCentimeters:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.traveled_distance *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return GetPredictedDistanceTraveledInStrokeUnits(input_modeler_state,
                                                        input) *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.acceleration.Magnitude() *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::
-        kInputAccelerationXInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.acceleration.x *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::
-        kInputAccelerationYInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return input.acceleration.y *
              input_modeler_state.stroke_unit_length->ToCentimeters();
     case BrushBehavior::Source::
-        kInputAccelerationForwardInCentimetersPerSecondSquared:
+        kAccelerationForwardInCentimetersPerSecondSquared:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return Vec::DotProduct(input.acceleration, input.velocity.AsUnitVec()) *
              input_modeler_state.stroke_unit_length->ToCentimeters();
     case BrushBehavior::Source::
-        kInputAccelerationLateralInCentimetersPerSecondSquared:
+        kAccelerationLateralInCentimetersPerSecondSquared:
       if (!input_modeler_state.stroke_unit_length.has_value()) break;
       return Vec::DotProduct(input.acceleration,
                              input.velocity.AsUnitVec().Orthogonal()) *
              input_modeler_state.stroke_unit_length->ToCentimeters();
-    case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength:
-      return input_modeler_state.complete_traveled_distance == 0.0f
+    case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength: {
+      float stroke_length =
+          input_modeler_state.full_input_metrics.traveled_distance;
+      return stroke_length == 0.0f
                  ? 0.0f
-                 : 1.0f - input.traveled_distance /
-                              input_modeler_state.complete_traveled_distance;
+                 : 1.0f - input.traveled_distance / stroke_length;
+    }
   }
   return std::nullopt;
-}
-
-bool IsOptionalInputPropertyPresent(
-    const BrushBehavior::OptionalInputProperty& property,
-    const ModeledStrokeInput& input) {
-  switch (property) {
-    case BrushBehavior::OptionalInputProperty::kPressure:
-      return input.pressure != StrokeInput::kNoPressure;
-    case BrushBehavior::OptionalInputProperty::kTilt:
-      return input.tilt != StrokeInput::kNoTilt;
-    case BrushBehavior::OptionalInputProperty::kOrientation:
-      return input.orientation != StrokeInput::kNoOrientation;
-    case BrushBehavior::OptionalInputProperty::kTiltXAndY:
-      return input.tilt != StrokeInput::kNoTilt &&
-             input.orientation != StrokeInput::kNoOrientation;
-  }
-  return false;
 }
 
 // Applies the `out_of_range_behavior` to `x` to return a value in [0, 1].
@@ -374,15 +366,6 @@ void ProcessBehaviorNodeImpl(const NoiseNodeImplementation& node,
   context.stack.push_back(generator.CurrentOutputValue());
 }
 
-void ProcessBehaviorNodeImpl(const BrushBehavior::FallbackFilterNode& node,
-                             const BehaviorNodeContext& context) {
-  ABSL_DCHECK(!context.stack.empty());
-  if (IsOptionalInputPropertyPresent(node.is_fallback_for,
-                                     context.current_input)) {
-    context.stack.back() = kNullBehaviorNodeValue;
-  }
-}
-
 void ProcessBehaviorNodeImpl(const BrushBehavior::ToolTypeFilterNode& node,
                              const BehaviorNodeContext& context) {
   ABSL_DCHECK(!context.stack.empty());
@@ -480,11 +463,25 @@ void ProcessBehaviorNodeImpl(const BrushBehavior::BinaryOpNode& node,
   context.stack.pop_back();
   float first_input = context.stack.back();
   float* result = &context.stack.back();
-  if (IsNullBehaviorNodeValue(first_input) ||
-      IsNullBehaviorNodeValue(second_input)) {
-    *result = kNullBehaviorNodeValue;
-    return;
+
+  // Some operations always return null if either input is null.
+  switch (node.operation) {
+    case BrushBehavior::BinaryOp::kProduct:
+    case BrushBehavior::BinaryOp::kSum:
+    case BrushBehavior::BinaryOp::kMin:
+    case BrushBehavior::BinaryOp::kMax:
+    case BrushBehavior::BinaryOp::kAndThen:
+      if (IsNullBehaviorNodeValue(first_input) ||
+          IsNullBehaviorNodeValue(second_input)) {
+        *result = kNullBehaviorNodeValue;
+        return;
+      }
+      break;
+    case BrushBehavior::BinaryOp::kOrElse:
+    case BrushBehavior::BinaryOp::kXorElse:
+      break;
   }
+
   switch (node.operation) {
     case BrushBehavior::BinaryOp::kProduct:
       *result = first_input * second_input;
@@ -498,7 +495,21 @@ void ProcessBehaviorNodeImpl(const BrushBehavior::BinaryOpNode& node,
     case BrushBehavior::BinaryOp::kMax:
       *result = std::max(first_input, second_input);
       break;
+    case BrushBehavior::BinaryOp::kAndThen:
+      *result = second_input;
+      break;
+    case BrushBehavior::BinaryOp::kOrElse:
+      *result =
+          IsNullBehaviorNodeValue(first_input) ? second_input : first_input;
+      break;
+    case BrushBehavior::BinaryOp::kXorElse:
+      *result = IsNullBehaviorNodeValue(first_input) ? second_input
+                : IsNullBehaviorNodeValue(second_input)
+                    ? first_input
+                    : kNullBehaviorNodeValue;
+      break;
   }
+
   // If any of the above operations resulted in a non-finite value
   // (e.g. overflow to infinity), treat the result as null.
   if (!std::isfinite(*result)) {
@@ -664,7 +675,7 @@ struct BrushTipStateModifiers {
   float texture_animation_progress_offset = 0;  // always in range [0, 1)
   Angle hue_offset;  // always in range [0, 2π) radians
   float saturation_multiplier = 1;
-  float luminosity = 0;
+  float luminosity_offset = 0;
   float opacity_multiplier = 1;
 };
 
@@ -747,8 +758,8 @@ void ApplyModifierToTarget(float modifier, BrushBehavior::Target target,
       tip_state_modifiers.saturation_multiplier =
           NanSafeMultiply(tip_state_modifiers.saturation_multiplier, modifier);
       break;
-    case BrushBehavior::Target::kLuminosity:
-      tip_state_modifiers.luminosity += modifier;
+    case BrushBehavior::Target::kLuminosityOffset:
+      tip_state_modifiers.luminosity_offset += modifier;
       break;
     case BrushBehavior::Target::kOpacityMultiplier:
       tip_state_modifiers.opacity_multiplier =
@@ -798,8 +809,9 @@ void ApplyModifiersToTipState(const BrushTipStateModifiers& modifiers,
     tip_state.saturation_multiplier =
         std::clamp(modifiers.saturation_multiplier, 0.f, 2.f);
   }
-  if (modifiers.luminosity != 0) {
-    tip_state.luminosity_shift = std::clamp(modifiers.luminosity, -1.f, 1.f);
+  if (modifiers.luminosity_offset != 0) {
+    tip_state.luminosity_offset =
+        std::clamp(modifiers.luminosity_offset, -1.f, 1.f);
   }
   if (modifiers.opacity_multiplier != 1) {
     tip_state.opacity_multiplier = std::clamp(

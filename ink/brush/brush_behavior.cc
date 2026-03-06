@@ -56,11 +56,13 @@ bool IsValidBehaviorSource(BrushBehavior::Source source) {
     case BrushBehavior::Source::kNormalizedDirectionY:
     case BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeOfInputInSeconds:
+    case BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds:
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
     case BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
     case BrushBehavior::Source::
@@ -71,20 +73,18 @@ bool IsValidBehaviorSource(BrushBehavior::Source source) {
         kAccelerationForwardInMultiplesOfBrushSizePerSecondSquared:
     case BrushBehavior::Source::
         kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared:
-    case BrushBehavior::Source::kInputSpeedInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputDistanceTraveledInCentimeters:
-    case BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters:
-    case BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kSpeedInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityXInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityYInCentimetersPerSecond:
+    case BrushBehavior::Source::kDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared:
     case BrushBehavior::Source::
-        kInputAccelerationXInCentimetersPerSecondSquared:
+        kAccelerationForwardInCentimetersPerSecondSquared:
     case BrushBehavior::Source::
-        kInputAccelerationYInCentimetersPerSecondSquared:
-    case BrushBehavior::Source::
-        kInputAccelerationForwardInCentimetersPerSecondSquared:
-    case BrushBehavior::Source::
-        kInputAccelerationLateralInCentimetersPerSecondSquared:
+        kAccelerationLateralInCentimetersPerSecondSquared:
     case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength:
       return true;
   }
@@ -95,9 +95,10 @@ absl::Status ValidateSourceAndOutOfRangeCombination(
     BrushBehavior::Source source, BrushBehavior::OutOfRange out_of_range) {
   switch (source) {
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
       if (out_of_range != BrushBehavior::OutOfRange::kClamp) {
         return absl::InvalidArgumentError(
-            "`Source::kTimeSinceInputInSeconds` must only be used with "
+            "`kTimeSince*` sources can only be used with a "
             "`source_out_of_range_behavior` of `kClamp`.");
       }
       break;
@@ -116,6 +117,7 @@ absl::Status ValidateSourceAndOutOfRangeCombination(
     case BrushBehavior::Source::kNormalizedDirectionY:
     case BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kTimeOfInputInSeconds:
+    case BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds:
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
     case BrushBehavior::Source::kPredictedTimeElapsedInSeconds:
@@ -130,20 +132,18 @@ absl::Status ValidateSourceAndOutOfRangeCombination(
         kAccelerationForwardInMultiplesOfBrushSizePerSecondSquared:
     case BrushBehavior::Source::
         kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared:
-    case BrushBehavior::Source::kInputSpeedInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond:
-    case BrushBehavior::Source::kInputDistanceTraveledInCentimeters:
-    case BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters:
-    case BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kSpeedInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityXInCentimetersPerSecond:
+    case BrushBehavior::Source::kVelocityYInCentimetersPerSecond:
+    case BrushBehavior::Source::kDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters:
+    case BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared:
+    case BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared:
     case BrushBehavior::Source::
-        kInputAccelerationXInCentimetersPerSecondSquared:
+        kAccelerationForwardInCentimetersPerSecondSquared:
     case BrushBehavior::Source::
-        kInputAccelerationYInCentimetersPerSecondSquared:
-    case BrushBehavior::Source::
-        kInputAccelerationForwardInCentimetersPerSecondSquared:
-    case BrushBehavior::Source::
-        kInputAccelerationLateralInCentimetersPerSecondSquared:
+        kAccelerationLateralInCentimetersPerSecondSquared:
     case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength:
       break;
   }
@@ -166,7 +166,7 @@ bool IsValidBehaviorTarget(BrushBehavior::Target target) {
     case BrushBehavior::Target::kTextureAnimationProgressOffset:
     case BrushBehavior::Target::kHueOffsetInRadians:
     case BrushBehavior::Target::kSaturationMultiplier:
-    case BrushBehavior::Target::kLuminosity:
+    case BrushBehavior::Target::kLuminosityOffset:
     case BrushBehavior::Target::kOpacityMultiplier:
       return true;
   }
@@ -199,24 +199,15 @@ bool IsRangeValid(std::array<float, 2> range) {
          std::isfinite(range[1]) && range[0] != range[1];
 }
 
-bool IsValidOptionalInputProperty(
-    BrushBehavior::OptionalInputProperty unreported_source) {
-  switch (unreported_source) {
-    case BrushBehavior::OptionalInputProperty::kPressure:
-    case BrushBehavior::OptionalInputProperty::kTilt:
-    case BrushBehavior::OptionalInputProperty::kOrientation:
-    case BrushBehavior::OptionalInputProperty::kTiltXAndY:
-      return true;
-  }
-  return false;
-}
-
 bool IsValidBehaviorBinaryOp(BrushBehavior::BinaryOp operation) {
   switch (operation) {
     case BrushBehavior::BinaryOp::kProduct:
     case BrushBehavior::BinaryOp::kSum:
     case BrushBehavior::BinaryOp::kMin:
     case BrushBehavior::BinaryOp::kMax:
+    case BrushBehavior::BinaryOp::kAndThen:
+    case BrushBehavior::BinaryOp::kOrElse:
+    case BrushBehavior::BinaryOp::kXorElse:
       return true;
   }
   return false;
@@ -246,7 +237,6 @@ bool IsValidBehaviorInterpolation(BrushBehavior::Interpolation interpolation) {
 int NodeInputCount(const BrushBehavior::SourceNode& node) { return 0; }
 int NodeInputCount(const BrushBehavior::ConstantNode& node) { return 0; }
 int NodeInputCount(const BrushBehavior::NoiseNode& node) { return 0; }
-int NodeInputCount(const BrushBehavior::FallbackFilterNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::ToolTypeFilterNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::DampingNode& node) { return 1; }
 int NodeInputCount(const BrushBehavior::ResponseNode& node) { return 1; }
@@ -314,15 +304,6 @@ absl::Status ValidateNode(const BrushBehavior::NoiseNode& node) {
     return absl::InvalidArgumentError(absl::StrCat(
         "`NoiseNode::base_period` must be finite and positive. Got ",
         node.base_period));
-  }
-  return absl::OkStatus();
-}
-
-absl::Status ValidateNode(const BrushBehavior::FallbackFilterNode& node) {
-  if (!IsValidOptionalInputProperty(node.is_fallback_for)) {
-    return absl::InvalidArgumentError(absl::StrFormat(
-        "`FallbackFilterNode::is_fallback_for` holds non-enumerator value %d",
-        static_cast<int>(node.is_fallback_for)));
   }
   return absl::OkStatus();
 }
@@ -505,6 +486,8 @@ std::string ToFormattedString(BrushBehavior::Source source) {
       return "kDistanceTraveledInMultiplesOfBrushSize";
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return "kTimeOfInputInSeconds";
+    case BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds:
+      return "kTimeFromInputToStrokeEndInSeconds";
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return "kPredictedDistanceTraveledInMultiplesOfBrushSize";
@@ -514,6 +497,8 @@ std::string ToFormattedString(BrushBehavior::Source source) {
       return "kDistanceRemainingInMultiplesOfBrushSize";
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
       return "kTimeSinceInputInSeconds";
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
+      return "kTimeSinceStrokeEndInSeconds";
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return "kAccelerationInMultiplesOfBrushSizePerSecondSquared";
@@ -529,30 +514,28 @@ std::string ToFormattedString(BrushBehavior::Source source) {
     case BrushBehavior::Source::
         kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared:
       return "kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared";
-    case BrushBehavior::Source::kInputSpeedInCentimetersPerSecond:
-      return "kInputSpeedInCentimetersPerSecond";
-    case BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond:
-      return "kInputVelocityXInCentimetersPerSecond";
-    case BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond:
-      return "kInputVelocityYInCentimetersPerSecond";
-    case BrushBehavior::Source::kInputDistanceTraveledInCentimeters:
-      return "kInputDistanceTraveledInCentimeters";
-    case BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters:
-      return "kPredictedInputDistanceTraveledInCentimeters";
-    case BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared:
-      return "kInputAccelerationInCentimetersPerSecondSquared";
+    case BrushBehavior::Source::kSpeedInCentimetersPerSecond:
+      return "kSpeedInCentimetersPerSecond";
+    case BrushBehavior::Source::kVelocityXInCentimetersPerSecond:
+      return "kVelocityXInCentimetersPerSecond";
+    case BrushBehavior::Source::kVelocityYInCentimetersPerSecond:
+      return "kVelocityYInCentimetersPerSecond";
+    case BrushBehavior::Source::kDistanceTraveledInCentimeters:
+      return "kDistanceTraveledInCentimeters";
+    case BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters:
+      return "kPredictedDistanceTraveledInCentimeters";
+    case BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared:
+      return "kAccelerationInCentimetersPerSecondSquared";
+    case BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared:
+      return "kAccelerationXInCentimetersPerSecondSquared";
+    case BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared:
+      return "kAccelerationYInCentimetersPerSecondSquared";
     case BrushBehavior::Source::
-        kInputAccelerationXInCentimetersPerSecondSquared:
-      return "kInputAccelerationXInCentimetersPerSecondSquared";
+        kAccelerationForwardInCentimetersPerSecondSquared:
+      return "kAccelerationForwardInCentimetersPerSecondSquared";
     case BrushBehavior::Source::
-        kInputAccelerationYInCentimetersPerSecondSquared:
-      return "kInputAccelerationYInCentimetersPerSecondSquared";
-    case BrushBehavior::Source::
-        kInputAccelerationForwardInCentimetersPerSecondSquared:
-      return "kInputAccelerationForwardInCentimetersPerSecondSquared";
-    case BrushBehavior::Source::
-        kInputAccelerationLateralInCentimetersPerSecondSquared:
-      return "kInputAccelerationLateralInCentimetersPerSecondSquared";
+        kAccelerationLateralInCentimetersPerSecondSquared:
+      return "kAccelerationLateralInCentimetersPerSecondSquared";
     case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength:
       return "kDistanceRemainingAsFractionOfStrokeLength";
   }
@@ -589,8 +572,8 @@ std::string ToFormattedString(BrushBehavior::Target target) {
       return "kHueOffsetInRadians";
     case BrushBehavior::Target::kSaturationMultiplier:
       return "kSaturationMultiplier";
-    case BrushBehavior::Target::kLuminosity:
-      return "kLuminosity";
+    case BrushBehavior::Target::kLuminosityOffset:
+      return "kLuminosityOffset";
     case BrushBehavior::Target::kOpacityMultiplier:
       return "kOpacityMultiplier";
   }
@@ -647,20 +630,6 @@ std::string ToFormattedString(BrushBehavior::EnabledToolTypes enabled) {
   return formatted;
 }
 
-std::string ToFormattedString(BrushBehavior::OptionalInputProperty input) {
-  switch (input) {
-    case BrushBehavior::OptionalInputProperty::kPressure:
-      return "kPressure";
-    case BrushBehavior::OptionalInputProperty::kTilt:
-      return "kTilt";
-    case BrushBehavior::OptionalInputProperty::kOrientation:
-      return "kOrientation";
-    case BrushBehavior::OptionalInputProperty::kTiltXAndY:
-      return "kTiltXAndY";
-  }
-  return absl::StrCat("OptionalInputProperty(", static_cast<int>(input), ")");
-}
-
 std::string ToFormattedString(BrushBehavior::BinaryOp operation) {
   switch (operation) {
     case BrushBehavior::BinaryOp::kProduct:
@@ -671,6 +640,12 @@ std::string ToFormattedString(BrushBehavior::BinaryOp operation) {
       return "kMin";
     case BrushBehavior::BinaryOp::kMax:
       return "kMax";
+    case BrushBehavior::BinaryOp::kAndThen:
+      return "kAndThen";
+    case BrushBehavior::BinaryOp::kOrElse:
+      return "kOrElse";
+    case BrushBehavior::BinaryOp::kXorElse:
+      return "kXorElse";
   }
   return absl::StrCat("BinaryOp(", static_cast<int>(operation), ")");
 }
@@ -720,10 +695,6 @@ std::string ToFormattedString(const BrushBehavior::NoiseNode& node) {
   return absl::StrCat(
       "NoiseNode{seed=0x", absl::Hex(node.seed, absl::kZeroPad8),
       ", vary_over=", node.vary_over, ", base_period=", node.base_period, "}");
-}
-
-std::string ToFormattedString(const BrushBehavior::FallbackFilterNode& node) {
-  return absl::StrCat("FallbackFilterNode{", node.is_fallback_for, "}");
 }
 
 std::string ToFormattedString(const BrushBehavior::ToolTypeFilterNode& node) {

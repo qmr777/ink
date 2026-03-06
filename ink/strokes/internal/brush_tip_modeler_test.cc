@@ -388,14 +388,17 @@ TEST(BrushTipModelerTest, TipWithFallbackFilter) {
       .behaviors = {BrushBehavior{{
           // Map speed to width multiplier, but only if pressure is missing.
           BrushBehavior::SourceNode{
+              .source = BrushBehavior::Source::kNormalizedPressure,
+              .source_value_range = {0, 1},
+          },
+          BrushBehavior::ConstantNode{0.0f},
+          BrushBehavior::BinaryOpNode{BrushBehavior::BinaryOp::kXorElse},
+          BrushBehavior::SourceNode{
               .source =
                   BrushBehavior::Source::kSpeedInMultiplesOfBrushSizePerSecond,
               .source_value_range = {0, 1},
           },
-          BrushBehavior::FallbackFilterNode{
-              .is_fallback_for =
-                  BrushBehavior::OptionalInputProperty::kPressure,
-          },
+          BrushBehavior::BinaryOpNode{BrushBehavior::BinaryOp::kAndThen},
           BrushBehavior::TargetNode{
               .target = BrushBehavior::Target::kWidthMultiplier,
               .target_modifier_range = {1.5, 2},
@@ -1246,6 +1249,16 @@ TEST(BrushTipModelerDeathTest, NanBrushSize) {
   static_assert(std::numeric_limits<float>::has_quiet_NaN);
   EXPECT_DEATH_IF_SUPPORTED(
       modeler.StartStroke(&tip, std::numeric_limits<float>::quiet_NaN()), "");
+}
+
+TEST(BrushTipModelerDeathTest, UpdateStrokeBeforeStartStroke) {
+  BrushTipModeler modeler;
+  EXPECT_DEATH_IF_SUPPORTED(modeler.UpdateStroke({}, {}), "");
+}
+
+TEST(BrushTipModelerDeathTest, RestartStrokeBeforeStartStroke) {
+  BrushTipModeler modeler;
+  EXPECT_DEATH_IF_SUPPORTED(modeler.RestartStroke(), "");
 }
 
 void CanModelAnyValidBrushTipAndInputs(const BrushTip& brush_tip,

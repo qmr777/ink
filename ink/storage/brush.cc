@@ -61,6 +61,12 @@ proto::BrushBehavior::BinaryOp EncodeBrushBehaviorBinaryOp(
       return proto::BrushBehavior::BINARY_OP_MIN;
     case BrushBehavior::BinaryOp::kMax:
       return proto::BrushBehavior::BINARY_OP_MAX;
+    case BrushBehavior::BinaryOp::kAndThen:
+      return proto::BrushBehavior::BINARY_OP_AND_THEN;
+    case BrushBehavior::BinaryOp::kOrElse:
+      return proto::BrushBehavior::BINARY_OP_OR_ELSE;
+    case BrushBehavior::BinaryOp::kXorElse:
+      return proto::BrushBehavior::BINARY_OP_XOR_ELSE;
   }
   return proto::BrushBehavior::BINARY_OP_UNSPECIFIED;
 }
@@ -76,6 +82,12 @@ absl::StatusOr<BrushBehavior::BinaryOp> DecodeBrushBehaviorBinaryOp(
       return BrushBehavior::BinaryOp::kMin;
     case proto::BrushBehavior::BINARY_OP_MAX:
       return BrushBehavior::BinaryOp::kMax;
+    case proto::BrushBehavior::BINARY_OP_AND_THEN:
+      return BrushBehavior::BinaryOp::kAndThen;
+    case proto::BrushBehavior::BINARY_OP_OR_ELSE:
+      return BrushBehavior::BinaryOp::kOrElse;
+    case proto::BrushBehavior::BINARY_OP_XOR_ELSE:
+      return BrushBehavior::BinaryOp::kXorElse;
     default:
       return absl::InvalidArgumentError(absl::StrCat(
           "invalid ink.proto.BrushBehavior.BinaryOp value: ", binary_op_proto));
@@ -176,6 +188,9 @@ proto::BrushBehavior::Source EncodeBrushBehaviorSource(
           SOURCE_DISTANCE_TRAVELED_IN_MULTIPLES_OF_BRUSH_SIZE;
     case BrushBehavior::Source::kTimeOfInputInSeconds:
       return proto::BrushBehavior::SOURCE_TIME_OF_INPUT_IN_SECONDS;
+    case BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds:
+      return proto::BrushBehavior::
+          SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS;
     case BrushBehavior::Source::
         kPredictedDistanceTraveledInMultiplesOfBrushSize:
       return proto::BrushBehavior::
@@ -187,6 +202,8 @@ proto::BrushBehavior::Source EncodeBrushBehaviorSource(
           SOURCE_DISTANCE_REMAINING_IN_MULTIPLES_OF_BRUSH_SIZE;
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
       return proto::BrushBehavior::SOURCE_TIME_SINCE_INPUT_IN_SECONDS;
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
+      return proto::BrushBehavior::SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS;
     case BrushBehavior::Source::
         kAccelerationInMultiplesOfBrushSizePerSecondSquared:
       return proto::BrushBehavior::
@@ -207,39 +224,34 @@ proto::BrushBehavior::Source EncodeBrushBehaviorSource(
         kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared:
       return proto::BrushBehavior::
           SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED;
-    case BrushBehavior::Source::kInputSpeedInCentimetersPerSecond:
-      return proto::BrushBehavior::SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND;
-    case BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond:
+    case BrushBehavior::Source::kSpeedInCentimetersPerSecond:
+      return proto::BrushBehavior::SOURCE_SPEED_IN_CENTIMETERS_PER_SECOND;
+    case BrushBehavior::Source::kVelocityXInCentimetersPerSecond:
+      return proto::BrushBehavior::SOURCE_VELOCITY_X_IN_CENTIMETERS_PER_SECOND;
+    case BrushBehavior::Source::kVelocityYInCentimetersPerSecond:
+      return proto::BrushBehavior::SOURCE_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND;
+    case BrushBehavior::Source::kDistanceTraveledInCentimeters:
+      return proto::BrushBehavior::SOURCE_DISTANCE_TRAVELED_IN_CENTIMETERS;
+    case BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters:
       return proto::BrushBehavior::
-          SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND;
-    case BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond:
+          SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_CENTIMETERS;
+    case BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared:
       return proto::BrushBehavior::
-          SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND;
-    case BrushBehavior::Source::kInputDistanceTraveledInCentimeters:
+          SOURCE_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED;
+    case BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared:
       return proto::BrushBehavior::
-          SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS;
-    case BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters:
+          SOURCE_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED;
+    case BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared:
       return proto::BrushBehavior::
-          SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS;
-    case BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared:
-      return proto::BrushBehavior::
-          SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED;
+          SOURCE_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED;
     case BrushBehavior::Source::
-        kInputAccelerationXInCentimetersPerSecondSquared:
+        kAccelerationForwardInCentimetersPerSecondSquared:
       return proto::BrushBehavior::
-          SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED;
+          SOURCE_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED;
     case BrushBehavior::Source::
-        kInputAccelerationYInCentimetersPerSecondSquared:
+        kAccelerationLateralInCentimetersPerSecondSquared:
       return proto::BrushBehavior::
-          SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED;
-    case BrushBehavior::Source::
-        kInputAccelerationForwardInCentimetersPerSecondSquared:
-      return proto::BrushBehavior::
-          SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED;
-    case BrushBehavior::Source::
-        kInputAccelerationLateralInCentimetersPerSecondSquared:
-      return proto::BrushBehavior::
-          SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED;
+          SOURCE_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED;
     case BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength:
       return proto::BrushBehavior::
           SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH;
@@ -335,43 +347,41 @@ absl::StatusOr<BrushBehavior::Source> DecodeBrushBehaviorSource(
         SOURCE_ACCELERATION_LATERAL_IN_MULTIPLES_OF_BRUSH_SIZE_PER_SECOND_SQUARED:
       return BrushBehavior::Source::
           kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared;
-    case proto::BrushBehavior::SOURCE_INPUT_SPEED_IN_CENTIMETERS_PER_SECOND:
-      return BrushBehavior::Source::kInputSpeedInCentimetersPerSecond;
+    case proto::BrushBehavior::SOURCE_SPEED_IN_CENTIMETERS_PER_SECOND:
+      return BrushBehavior::Source::kSpeedInCentimetersPerSecond;
+    case proto::BrushBehavior::SOURCE_VELOCITY_X_IN_CENTIMETERS_PER_SECOND:
+      return BrushBehavior::Source::kVelocityXInCentimetersPerSecond;
+    case proto::BrushBehavior::SOURCE_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND:
+      return BrushBehavior::Source::kVelocityYInCentimetersPerSecond;
+    case proto::BrushBehavior::SOURCE_DISTANCE_TRAVELED_IN_CENTIMETERS:
+      return BrushBehavior::Source::kDistanceTraveledInCentimeters;
     case proto::BrushBehavior::
-        SOURCE_INPUT_VELOCITY_X_IN_CENTIMETERS_PER_SECOND:
-      return BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond;
+        SOURCE_PREDICTED_DISTANCE_TRAVELED_IN_CENTIMETERS:
+      return BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters;
     case proto::BrushBehavior::
-        SOURCE_INPUT_VELOCITY_Y_IN_CENTIMETERS_PER_SECOND:
-      return BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond;
-    case proto::BrushBehavior::SOURCE_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS:
-      return BrushBehavior::Source::kInputDistanceTraveledInCentimeters;
+        SOURCE_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED:
+      return BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared;
     case proto::BrushBehavior::
-        SOURCE_PREDICTED_INPUT_DISTANCE_TRAVELED_IN_CENTIMETERS:
+        SOURCE_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED:
+      return BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared;
+    case proto::BrushBehavior::
+        SOURCE_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED:
+      return BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared;
+    case proto::BrushBehavior::
+        SOURCE_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED:
       return BrushBehavior::Source::
-          kPredictedInputDistanceTraveledInCentimeters;
+          kAccelerationForwardInCentimetersPerSecondSquared;
     case proto::BrushBehavior::
-        SOURCE_INPUT_ACCELERATION_IN_CENTIMETERS_PER_SECOND_SQUARED:
+        SOURCE_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED:
       return BrushBehavior::Source::
-          kInputAccelerationInCentimetersPerSecondSquared;
-    case proto::BrushBehavior::
-        SOURCE_INPUT_ACCELERATION_X_IN_CENTIMETERS_PER_SECOND_SQUARED:
-      return BrushBehavior::Source::
-          kInputAccelerationXInCentimetersPerSecondSquared;
-    case proto::BrushBehavior::
-        SOURCE_INPUT_ACCELERATION_Y_IN_CENTIMETERS_PER_SECOND_SQUARED:
-      return BrushBehavior::Source::
-          kInputAccelerationYInCentimetersPerSecondSquared;
-    case proto::BrushBehavior::
-        SOURCE_INPUT_ACCELERATION_FORWARD_IN_CENTIMETERS_PER_SECOND_SQUARED:
-      return BrushBehavior::Source::
-          kInputAccelerationForwardInCentimetersPerSecondSquared;
-    case proto::BrushBehavior::
-        SOURCE_INPUT_ACCELERATION_LATERAL_IN_CENTIMETERS_PER_SECOND_SQUARED:
-      return BrushBehavior::Source::
-          kInputAccelerationLateralInCentimetersPerSecondSquared;
+          kAccelerationLateralInCentimetersPerSecondSquared;
     case proto::BrushBehavior::
         SOURCE_DISTANCE_REMAINING_AS_FRACTION_OF_STROKE_LENGTH:
       return BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength;
+    case proto::BrushBehavior::SOURCE_TIME_SINCE_STROKE_END_IN_SECONDS:
+      return BrushBehavior::Source::kTimeSinceStrokeEndInSeconds;
+    case proto::BrushBehavior::SOURCE_TIME_FROM_INPUT_TO_STROKE_END_IN_SECONDS:
+      return BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds;
     default:
       return absl::InvalidArgumentError(absl::StrCat(
           "invalid ink.proto.BrushBehavior.Source value: ", source_proto));
@@ -414,8 +424,8 @@ proto::BrushBehavior::Target EncodeBrushBehaviorTarget(
       return proto::BrushBehavior::TARGET_HUE_OFFSET_IN_RADIANS;
     case BrushBehavior::Target::kSaturationMultiplier:
       return proto::BrushBehavior::TARGET_SATURATION_MULTIPLIER;
-    case BrushBehavior::Target::kLuminosity:
-      return proto::BrushBehavior::TARGET_LUMINOSITY;
+    case BrushBehavior::Target::kLuminosityOffset:
+      return proto::BrushBehavior::TARGET_LUMINOSITY_OFFSET;
     case BrushBehavior::Target::kOpacityMultiplier:
       return proto::BrushBehavior::TARGET_OPACITY_MULTIPLIER;
   }
@@ -443,8 +453,8 @@ absl::StatusOr<BrushBehavior::Target> DecodeBrushBehaviorTarget(
       return BrushBehavior::Target::kHueOffsetInRadians;
     case proto::BrushBehavior::TARGET_SATURATION_MULTIPLIER:
       return BrushBehavior::Target::kSaturationMultiplier;
-    case proto::BrushBehavior::TARGET_LUMINOSITY:
-      return BrushBehavior::Target::kLuminosity;
+    case proto::BrushBehavior::TARGET_LUMINOSITY_OFFSET:
+      return BrushBehavior::Target::kLuminosityOffset;
     case proto::BrushBehavior::TARGET_OPACITY_MULTIPLIER:
       return BrushBehavior::Target::kOpacityMultiplier;
     case proto::BrushBehavior::
@@ -548,34 +558,17 @@ BrushBehavior::EnabledToolTypes DecodeBrushBehaviorEnabledToolTypes(
   };
 }
 
-proto::BrushBehavior::OptionalInputProperty
-EncodeBrushBehaviorOptionalInputProperty(
-    BrushBehavior::OptionalInputProperty optional_input) {
-  switch (optional_input) {
-    case BrushBehavior::OptionalInputProperty::kPressure:
-      return proto::BrushBehavior::OPTIONAL_INPUT_PRESSURE;
-    case BrushBehavior::OptionalInputProperty::kTilt:
-      return proto::BrushBehavior::OPTIONAL_INPUT_TILT;
-    case BrushBehavior::OptionalInputProperty::kOrientation:
-      return proto::BrushBehavior::OPTIONAL_INPUT_ORIENTATION;
-    case BrushBehavior::OptionalInputProperty::kTiltXAndY:
-      return proto::BrushBehavior::OPTIONAL_INPUT_TILT_X_AND_Y;
-  }
-  return proto::BrushBehavior::OPTIONAL_INPUT_UNSPECIFIED;
-}
-
-absl::StatusOr<BrushBehavior::OptionalInputProperty>
-DecodeBrushBehaviorOptionalInputProperty(
+absl::StatusOr<BrushBehavior::Source> SourceForOptionalInputProperty(
     proto::BrushBehavior::OptionalInputProperty optional_input_proto) {
   switch (optional_input_proto) {
     case proto::BrushBehavior::OPTIONAL_INPUT_PRESSURE:
-      return BrushBehavior::OptionalInputProperty::kPressure;
+      return BrushBehavior::Source::kNormalizedPressure;
     case proto::BrushBehavior::OPTIONAL_INPUT_TILT:
-      return BrushBehavior::OptionalInputProperty::kTilt;
+      return BrushBehavior::Source::kTiltInRadians;
     case proto::BrushBehavior::OPTIONAL_INPUT_ORIENTATION:
-      return BrushBehavior::OptionalInputProperty::kOrientation;
+      return BrushBehavior::Source::kOrientationInRadians;
     case proto::BrushBehavior::OPTIONAL_INPUT_TILT_X_AND_Y:
-      return BrushBehavior::OptionalInputProperty::kTiltXAndY;
+      return BrushBehavior::Source::kTiltXInRadians;
     default:
       return absl::InvalidArgumentError(absl::StrCat(
           "invalid ink.proto.BrushBehavior.OptionalInputProperty value: ",
@@ -810,12 +803,6 @@ void EncodeBrushBehaviorNode(const BrushBehavior::NoiseNode& node,
   noise_node_proto->set_base_period(node.base_period);
 }
 
-void EncodeBrushBehaviorNode(const BrushBehavior::FallbackFilterNode& node,
-                             proto::BrushBehavior::Node& node_proto_out) {
-  node_proto_out.mutable_fallback_filter_node()->set_is_fallback_for(
-      EncodeBrushBehaviorOptionalInputProperty(node.is_fallback_for));
-}
-
 void EncodeBrushBehaviorNode(const BrushBehavior::ToolTypeFilterNode& node,
                              proto::BrushBehavior::Node& node_proto_out) {
   node_proto_out.mutable_tool_type_filter_node()->set_enabled_tool_types(
@@ -890,8 +877,9 @@ void EncodeBrushBehaviorNode(const BrushBehavior::PolarTargetNode& node,
   target_node_proto->set_magnitude_range_end(node.magnitude_range[1]);
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorSourceNode(
-    const proto::BrushBehavior::SourceNode& node_proto) {
+absl::Status DecodeBrushBehaviorSourceNode(
+    const proto::BrushBehavior::SourceNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   std::array<float, 2> source_value_range = {
       node_proto.source_value_range_start(),
       node_proto.source_value_range_end()};
@@ -906,32 +894,38 @@ absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorSourceNode(
     return source_out_of_range_behavior.status();
   }
 
-  return BrushBehavior::SourceNode{
+  nodes.push_back(BrushBehavior::SourceNode{
       .source = *source,
       .source_out_of_range_behavior = *source_out_of_range_behavior,
       .source_value_range = source_value_range,
-  };
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorConstantNode(
-    const proto::BrushBehavior::ConstantNode& node_proto) {
-  return BrushBehavior::ConstantNode{.value = node_proto.value()};
+absl::Status DecodeBrushBehaviorConstantNode(
+    const proto::BrushBehavior::ConstantNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
+  nodes.push_back(BrushBehavior::ConstantNode{.value = node_proto.value()});
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorNoiseNode(
-    const proto::BrushBehavior::NoiseNode& node_proto) {
+absl::Status DecodeBrushBehaviorNoiseNode(
+    const proto::BrushBehavior::NoiseNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::ProgressDomain> vary_over =
       DecodeBrushBehaviorProgressDomain(node_proto.vary_over());
   if (!vary_over.ok()) return vary_over.status();
-  return BrushBehavior::NoiseNode{
+  nodes.push_back(BrushBehavior::NoiseNode{
       .seed = node_proto.seed(),
       .vary_over = *vary_over,
       .base_period = node_proto.base_period(),
-  };
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorResponseNode(
-    const proto::BrushBehavior::ResponseNode& node_proto) {
+absl::Status DecodeBrushBehaviorResponseNode(
+    const proto::BrushBehavior::ResponseNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   EasingFunction function;
   switch (node_proto.response_curve_case()) {
     case proto::BrushBehavior::ResponseNode::RESPONSE_CURVE_NOT_SET:
@@ -961,54 +955,82 @@ absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorResponseNode(
       function.parameters = *steps;
     } break;
   }
-  return BrushBehavior::ResponseNode{.response_curve = std::move(function)};
+  nodes.push_back(
+      BrushBehavior::ResponseNode{.response_curve = std::move(function)});
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorFallbackFilterNode(
-    const proto::BrushBehavior::FallbackFilterNode& node_proto) {
-  absl::StatusOr<BrushBehavior::OptionalInputProperty> property =
-      DecodeBrushBehaviorOptionalInputProperty(node_proto.is_fallback_for());
-  if (!property.ok()) return property.status();
-  return BrushBehavior::FallbackFilterNode{.is_fallback_for = *property};
+absl::Status DecodeBrushBehaviorFallbackFilterNode(
+    const proto::BrushBehavior::FallbackFilterNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
+  absl::StatusOr<BrushBehavior::Source> source =
+      SourceForOptionalInputProperty(node_proto.is_fallback_for());
+  if (!source.ok()) return source.status();
+
+  nodes.insert(nodes.begin(),
+               {
+                   BrushBehavior::SourceNode{
+                       .source = *source,
+                       .source_value_range = {0, 1},
+                   },
+                   BrushBehavior::ConstantNode{.value = 0},
+                   BrushBehavior::BinaryOpNode{
+                       .operation = BrushBehavior::BinaryOp::kXorElse,
+                   },
+               });
+  nodes.push_back(BrushBehavior::BinaryOpNode{
+      .operation = BrushBehavior::BinaryOp::kAndThen,
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorToolTypeFilterNode(
-    const proto::BrushBehavior::ToolTypeFilterNode& node_proto) {
-  return BrushBehavior::ToolTypeFilterNode{
-      .enabled_tool_types =
-          DecodeBrushBehaviorEnabledToolTypes(node_proto.enabled_tool_types())};
+absl::Status DecodeBrushBehaviorToolTypeFilterNode(
+    const proto::BrushBehavior::ToolTypeFilterNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
+  nodes.push_back(BrushBehavior::ToolTypeFilterNode{
+      .enabled_tool_types = DecodeBrushBehaviorEnabledToolTypes(
+          node_proto.enabled_tool_types())});
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorDampingNode(
-    const proto::BrushBehavior::DampingNode& node_proto) {
+absl::Status DecodeBrushBehaviorDampingNode(
+    const proto::BrushBehavior::DampingNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::ProgressDomain> damping_source =
       DecodeBrushBehaviorProgressDomain(node_proto.damping_source());
   if (!damping_source.ok()) return damping_source.status();
 
-  return BrushBehavior::DampingNode{
+  nodes.push_back(BrushBehavior::DampingNode{
       .damping_source = *damping_source,
       .damping_gap = node_proto.damping_gap(),
-  };
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorBinaryOpNode(
-    proto::BrushBehavior::BinaryOpNode node_proto) {
+absl::Status DecodeBrushBehaviorBinaryOpNode(
+    proto::BrushBehavior::BinaryOpNode node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::BinaryOp> binary_op =
       DecodeBrushBehaviorBinaryOp(node_proto.operation());
   if (!binary_op.ok()) return binary_op.status();
-  return BrushBehavior::BinaryOpNode{.operation = *binary_op};
+  nodes.push_back(BrushBehavior::BinaryOpNode{.operation = *binary_op});
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorInterpolationNode(
-    const proto::BrushBehavior::InterpolationNode& node_proto) {
+absl::Status DecodeBrushBehaviorInterpolationNode(
+    const proto::BrushBehavior::InterpolationNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::Interpolation> interpolation =
       DecodeBrushBehaviorInterpolation(node_proto.interpolation());
   if (!interpolation.ok()) return interpolation.status();
-  return BrushBehavior::InterpolationNode{.interpolation = *interpolation};
+  nodes.push_back(
+      BrushBehavior::InterpolationNode{.interpolation = *interpolation});
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorIntegralNode(
-    const proto::BrushBehavior::IntegralNode& node_proto) {
+absl::Status DecodeBrushBehaviorIntegralNode(
+    const proto::BrushBehavior::IntegralNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::ProgressDomain> integrate_over =
       DecodeBrushBehaviorProgressDomain(node_proto.integrate_over());
   if (!integrate_over.ok()) return integrate_over.status();
@@ -1020,40 +1042,45 @@ absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorIntegralNode(
     return integral_out_of_range_behavior.status();
   }
 
-  return BrushBehavior::IntegralNode{
+  nodes.push_back(BrushBehavior::IntegralNode{
       .integrate_over = *integrate_over,
       .integral_out_of_range_behavior = *integral_out_of_range_behavior,
       .integral_value_range = {node_proto.integral_value_range_start(),
                                node_proto.integral_value_range_end()},
-  };
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorTargetNode(
-    const proto::BrushBehavior::TargetNode& node_proto) {
+absl::Status DecodeBrushBehaviorTargetNode(
+    const proto::BrushBehavior::TargetNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::Target> target =
       DecodeBrushBehaviorTarget(node_proto.target());
   if (!target.ok()) return target.status();
 
-  return BrushBehavior::TargetNode{
+  nodes.push_back(BrushBehavior::TargetNode{
       .target = *target,
       .target_modifier_range = {node_proto.target_modifier_range_start(),
                                 node_proto.target_modifier_range_end()},
-  };
+  });
+  return absl::OkStatus();
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorPolarTargetNode(
-    const proto::BrushBehavior::PolarTargetNode& node_proto) {
+absl::Status DecodeBrushBehaviorPolarTargetNode(
+    const proto::BrushBehavior::PolarTargetNode& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   absl::StatusOr<BrushBehavior::PolarTarget> target =
       DecodeBrushBehaviorPolarTarget(node_proto.target());
   if (!target.ok()) return target.status();
 
-  return BrushBehavior::PolarTargetNode{
+  nodes.push_back(BrushBehavior::PolarTargetNode{
       .target = *target,
       .angle_range = {node_proto.angle_range_start(),
                       node_proto.angle_range_end()},
       .magnitude_range = {node_proto.magnitude_range_start(),
                           node_proto.magnitude_range_end()},
-  };
+  });
+  return absl::OkStatus();
 }
 
 proto::BrushPaint::TextureLayer::Mapping EncodeBrushPaintTextureMapping(
@@ -1398,36 +1425,39 @@ void EncodeBrushBehaviorNode(const BrushBehavior::Node& node,
       node);
 }
 
-absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorNodeUnvalidated(
-    const proto::BrushBehavior::Node& node_proto) {
+absl::Status DecodeBrushBehaviorNodeUnvalidated(
+    const proto::BrushBehavior::Node& node_proto,
+    std::vector<BrushBehavior::Node>& nodes) {
   switch (node_proto.node_case()) {
     case proto::BrushBehavior::Node::kSourceNode:
-      return DecodeBrushBehaviorSourceNode(node_proto.source_node());
+      return DecodeBrushBehaviorSourceNode(node_proto.source_node(), nodes);
     case proto::BrushBehavior::Node::kConstantNode:
-      return DecodeBrushBehaviorConstantNode(node_proto.constant_node());
+      return DecodeBrushBehaviorConstantNode(node_proto.constant_node(), nodes);
     case proto::BrushBehavior::Node::kNoiseNode:
-      return DecodeBrushBehaviorNoiseNode(node_proto.noise_node());
+      return DecodeBrushBehaviorNoiseNode(node_proto.noise_node(), nodes);
     case proto::BrushBehavior::Node::kFallbackFilterNode:
       return DecodeBrushBehaviorFallbackFilterNode(
-          node_proto.fallback_filter_node());
+          node_proto.fallback_filter_node(), nodes);
     case proto::BrushBehavior::Node::kToolTypeFilterNode:
       return DecodeBrushBehaviorToolTypeFilterNode(
-          node_proto.tool_type_filter_node());
+          node_proto.tool_type_filter_node(), nodes);
     case proto::BrushBehavior::Node::kDampingNode:
-      return DecodeBrushBehaviorDampingNode(node_proto.damping_node());
+      return DecodeBrushBehaviorDampingNode(node_proto.damping_node(), nodes);
     case proto::BrushBehavior::Node::kResponseNode:
-      return DecodeBrushBehaviorResponseNode(node_proto.response_node());
+      return DecodeBrushBehaviorResponseNode(node_proto.response_node(), nodes);
     case proto::BrushBehavior::Node::kBinaryOpNode:
-      return DecodeBrushBehaviorBinaryOpNode(node_proto.binary_op_node());
+      return DecodeBrushBehaviorBinaryOpNode(node_proto.binary_op_node(),
+                                             nodes);
     case proto::BrushBehavior::Node::kInterpolationNode:
       return DecodeBrushBehaviorInterpolationNode(
-          node_proto.interpolation_node());
+          node_proto.interpolation_node(), nodes);
     case proto::BrushBehavior::Node::kIntegralNode:
-      return DecodeBrushBehaviorIntegralNode(node_proto.integral_node());
+      return DecodeBrushBehaviorIntegralNode(node_proto.integral_node(), nodes);
     case proto::BrushBehavior::Node::kTargetNode:
-      return DecodeBrushBehaviorTargetNode(node_proto.target_node());
+      return DecodeBrushBehaviorTargetNode(node_proto.target_node(), nodes);
     case proto::BrushBehavior::Node::kPolarTargetNode:
-      return DecodeBrushBehaviorPolarTargetNode(node_proto.polar_target_node());
+      return DecodeBrushBehaviorPolarTargetNode(node_proto.polar_target_node(),
+                                                nodes);
     case proto::BrushBehavior::Node::NODE_NOT_SET:
       break;
   }
@@ -1437,16 +1467,20 @@ absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorNodeUnvalidated(
 
 absl::StatusOr<BrushBehavior::Node> DecodeBrushBehaviorNode(
     const proto::BrushBehavior::Node& node_proto) {
-  absl::StatusOr<BrushBehavior::Node> node =
-      DecodeBrushBehaviorNodeUnvalidated(node_proto);
-  if (!node.ok()) {
-    return node.status();
-  }
-  if (absl::Status status = brush_internal::ValidateBrushBehaviorNode(*node);
+  std::vector<BrushBehavior::Node> nodes;
+  if (absl::Status status =
+          DecodeBrushBehaviorNodeUnvalidated(node_proto, nodes);
       !status.ok()) {
     return status;
   }
-  return *node;
+  if (nodes.size() != 1) {
+    return absl::InvalidArgumentError("could not decode deprecated node type");
+  }
+  if (absl::Status status = brush_internal::ValidateBrushBehaviorNode(nodes[0]);
+      !status.ok()) {
+    return status;
+  }
+  return std::move(nodes[0]);
 }
 
 void EncodeBrushPaint(const BrushPaint& paint,
@@ -1566,7 +1600,7 @@ absl::StatusOr<BrushTip> DecodeBrushTip(const proto::BrushTip& tip_proto) {
       !status.ok()) {
     return status;
   }
-  return tip;
+  return std::move(tip);
 }
 
 void EncodeBrushBehavior(const BrushBehavior& behavior,
@@ -1588,15 +1622,18 @@ absl::StatusOr<BrushBehavior> DecodeBrushBehavior(
   std::vector<BrushBehavior::Node> nodes;
   nodes.reserve(behavior_proto.nodes_size());
   for (const proto::BrushBehavior::Node& node_proto : behavior_proto.nodes()) {
-    absl::StatusOr<BrushBehavior::Node> node =
-        DecodeBrushBehaviorNode(node_proto);
-    if (!node.ok()) return node.status();
-    nodes.push_back(*std::move(node));
+    absl::Status status = DecodeBrushBehaviorNodeUnvalidated(node_proto, nodes);
+    if (!status.ok()) return status;
   }
-  return BrushBehavior{
+  BrushBehavior behavior = {
       .nodes = std::move(nodes),
       .developer_comment = behavior_proto.developer_comment(),
   };
+  if (absl::Status status = brush_internal::ValidateBrushBehavior(behavior);
+      !status.ok()) {
+    return status;
+  }
+  return std::move(behavior);
 }
 
 void EncodeBrushCoat(const BrushCoat& coat, proto::BrushCoat& coat_proto_out) {

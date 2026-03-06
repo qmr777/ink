@@ -130,6 +130,9 @@ Domain<BrushBehavior::BinaryOp> ArbitraryBrushBehaviorBinaryOp() {
       BrushBehavior::BinaryOp::kSum,
       BrushBehavior::BinaryOp::kMin,
       BrushBehavior::BinaryOp::kMax,
+      BrushBehavior::BinaryOp::kAndThen,
+      BrushBehavior::BinaryOp::kOrElse,
+      BrushBehavior::BinaryOp::kXorElse,
   });
 }
 // LINT.ThenChange(brush_behavior.h:binary_op)
@@ -153,18 +156,6 @@ Domain<BrushBehavior::Interpolation> ArbitraryBrushBehaviorInterpolation() {
 }
 // LINT.ThenChange(brush_behavior.h:interpolation)
 
-// LINT.IfChange(optional_input_property)
-Domain<BrushBehavior::OptionalInputProperty>
-ArbitraryBrushBehaviorOptionalInputProperty() {
-  return ElementOf({
-      BrushBehavior::OptionalInputProperty::kPressure,
-      BrushBehavior::OptionalInputProperty::kTilt,
-      BrushBehavior::OptionalInputProperty::kOrientation,
-      BrushBehavior::OptionalInputProperty::kTiltXAndY,
-  });
-}
-// LINT.ThenChange(brush_behavior.h:optional_input_property)
-
 // LINT.IfChange(out_of_range)
 Domain<BrushBehavior::OutOfRange> ArbitraryBrushBehaviorOutOfRange() {
   return ElementOf({
@@ -177,6 +168,7 @@ Domain<BrushBehavior::OutOfRange> ValidBrushBehaviorOutOfRangeForSource(
     BrushBehavior::Source source) {
   switch (source) {
     case BrushBehavior::Source::kTimeSinceInputInSeconds:
+    case BrushBehavior::Source::kTimeSinceStrokeEndInSeconds:
       return Just(BrushBehavior::OutOfRange::kClamp);
     default:
       return ArbitraryBrushBehaviorOutOfRange();
@@ -202,10 +194,12 @@ Domain<BrushBehavior::Source> ArbitraryBrushBehaviorSource() {
       BrushBehavior::Source::kNormalizedDirectionY,
       BrushBehavior::Source::kDistanceTraveledInMultiplesOfBrushSize,
       BrushBehavior::Source::kTimeOfInputInSeconds,
+      BrushBehavior::Source::kTimeFromInputToStrokeEndInSeconds,
       BrushBehavior::Source::kPredictedDistanceTraveledInMultiplesOfBrushSize,
       BrushBehavior::Source::kPredictedTimeElapsedInSeconds,
       BrushBehavior::Source::kDistanceRemainingInMultiplesOfBrushSize,
       BrushBehavior::Source::kTimeSinceInputInSeconds,
+      BrushBehavior::Source::kTimeSinceStrokeEndInSeconds,
       BrushBehavior::Source::
           kAccelerationInMultiplesOfBrushSizePerSecondSquared,
       BrushBehavior::Source::
@@ -216,18 +210,16 @@ Domain<BrushBehavior::Source> ArbitraryBrushBehaviorSource() {
           kAccelerationForwardInMultiplesOfBrushSizePerSecondSquared,
       BrushBehavior::Source::
           kAccelerationLateralInMultiplesOfBrushSizePerSecondSquared,
-      BrushBehavior::Source::kInputSpeedInCentimetersPerSecond,
-      BrushBehavior::Source::kInputVelocityXInCentimetersPerSecond,
-      BrushBehavior::Source::kInputVelocityYInCentimetersPerSecond,
-      BrushBehavior::Source::kInputDistanceTraveledInCentimeters,
-      BrushBehavior::Source::kPredictedInputDistanceTraveledInCentimeters,
-      BrushBehavior::Source::kInputAccelerationInCentimetersPerSecondSquared,
-      BrushBehavior::Source::kInputAccelerationXInCentimetersPerSecondSquared,
-      BrushBehavior::Source::kInputAccelerationYInCentimetersPerSecondSquared,
-      BrushBehavior::Source::
-          kInputAccelerationForwardInCentimetersPerSecondSquared,
-      BrushBehavior::Source::
-          kInputAccelerationLateralInCentimetersPerSecondSquared,
+      BrushBehavior::Source::kSpeedInCentimetersPerSecond,
+      BrushBehavior::Source::kVelocityXInCentimetersPerSecond,
+      BrushBehavior::Source::kVelocityYInCentimetersPerSecond,
+      BrushBehavior::Source::kDistanceTraveledInCentimeters,
+      BrushBehavior::Source::kPredictedDistanceTraveledInCentimeters,
+      BrushBehavior::Source::kAccelerationInCentimetersPerSecondSquared,
+      BrushBehavior::Source::kAccelerationXInCentimetersPerSecondSquared,
+      BrushBehavior::Source::kAccelerationYInCentimetersPerSecondSquared,
+      BrushBehavior::Source::kAccelerationForwardInCentimetersPerSecondSquared,
+      BrushBehavior::Source::kAccelerationLateralInCentimetersPerSecondSquared,
       BrushBehavior::Source::kDistanceRemainingAsFractionOfStrokeLength,
   });
 }
@@ -251,7 +243,7 @@ Domain<BrushBehavior::Target> ArbitraryBrushBehaviorTarget(
       BrushBehavior::Target::kTextureAnimationProgressOffset,
       BrushBehavior::Target::kHueOffsetInRadians,
       BrushBehavior::Target::kSaturationMultiplier,
-      BrushBehavior::Target::kLuminosity,
+      BrushBehavior::Target::kLuminosityOffset,
       BrushBehavior::Target::kOpacityMultiplier,
   };
   if (variant == DomainVariant::kValidAndSerializable) {
@@ -349,12 +341,6 @@ Domain<BrushBehavior::NoiseNode> ValidBrushBehaviorNoiseNode() {
       FinitePositiveFloat());
 }
 
-Domain<BrushBehavior::FallbackFilterNode>
-ValidBrushBehaviorFallbackFilterNode() {
-  return StructOf<BrushBehavior::FallbackFilterNode>(
-      ArbitraryBrushBehaviorOptionalInputProperty());
-}
-
 Domain<BrushBehavior::ToolTypeFilterNode>
 ValidBrushBehaviorToolTypeFilterNode() {
   return StructOf<BrushBehavior::ToolTypeFilterNode>(
@@ -442,8 +428,7 @@ ValidBrushBehaviorNodeSubtreeWithMaxDepth(int max_depth) {
             return result;
           },
           smaller_subtree,
-          OneOf(BrushBehaviorNodeOf(ValidBrushBehaviorFallbackFilterNode()),
-                BrushBehaviorNodeOf(ValidBrushBehaviorToolTypeFilterNode()),
+          OneOf(BrushBehaviorNodeOf(ValidBrushBehaviorToolTypeFilterNode()),
                 BrushBehaviorNodeOf(ValidBrushBehaviorDampingNode()),
                 BrushBehaviorNodeOf(ValidBrushBehaviorResponseNode()),
                 BrushBehaviorNodeOf(ValidBrushBehaviorIntegralNode()))),
@@ -540,10 +525,10 @@ Domain<BrushBehavior> ValidBrushBehavior(DomainVariant variant) {
 Domain<BrushBehavior::Node> ValidBrushBehaviorNode(DomainVariant variant) {
   return VariantOf(
       ValidBrushBehaviorSourceNode(), ValidBrushBehaviorConstantNode(),
-      ValidBrushBehaviorNoiseNode(), ValidBrushBehaviorFallbackFilterNode(),
-      ValidBrushBehaviorToolTypeFilterNode(), ValidBrushBehaviorDampingNode(),
-      ValidBrushBehaviorResponseNode(), ValidBrushBehaviorIntegralNode(),
-      ValidBrushBehaviorBinaryOpNode(), ValidBrushBehaviorInterpolationNode(),
+      ValidBrushBehaviorNoiseNode(), ValidBrushBehaviorToolTypeFilterNode(),
+      ValidBrushBehaviorDampingNode(), ValidBrushBehaviorResponseNode(),
+      ValidBrushBehaviorIntegralNode(), ValidBrushBehaviorBinaryOpNode(),
+      ValidBrushBehaviorInterpolationNode(),
       ValidBrushBehaviorTargetNode(variant),
       ValidBrushBehaviorPolarTargetNode());
 }

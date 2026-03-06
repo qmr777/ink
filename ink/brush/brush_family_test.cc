@@ -15,7 +15,6 @@
 #include "ink/brush/brush_family.h"
 
 #include <limits>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -72,9 +71,6 @@ BrushTip CreatePressureTestTip() {
           },
           BrushBehavior::ToolTypeFilterNode{
               .enabled_tool_types = {.touch = true, .stylus = true},
-          },
-          BrushBehavior::FallbackFilterNode{
-              .is_fallback_for = BrushBehavior::OptionalInputProperty::kTilt,
           },
           BrushBehavior::ResponseNode{
               .response_curve = {EasingFunction::Predefined::kEaseInOut},
@@ -522,6 +518,9 @@ TEST(BrushFamilyTest, CreateWithInvalidBehaviorSourceAndOutOfRangeBehavior) {
   BrushTip brush_tip = {
       .behaviors = {BrushBehavior{{
           BrushBehavior::SourceNode{
+              .source = BrushBehavior::Source::kTimeSinceInputInSeconds,
+              .source_out_of_range_behavior =
+                  BrushBehavior::OutOfRange::kRepeat,
               .source_value_range = {0, 1},
           },
           BrushBehavior::TargetNode{
@@ -530,17 +529,11 @@ TEST(BrushFamilyTest, CreateWithInvalidBehaviorSourceAndOutOfRangeBehavior) {
           },
       }}},
   };
-  BrushBehavior::SourceNode* source_node =
-      &std::get<BrushBehavior::SourceNode>(brush_tip.behaviors[0].nodes[0]);
-
-  source_node->source = BrushBehavior::Source::kTimeSinceInputInSeconds;
-  source_node->source_out_of_range_behavior =
-      BrushBehavior::OutOfRange::kRepeat;
-  absl::Status status = BrushFamily::Create(brush_tip, BrushPaint{}).status();
-  EXPECT_EQ(status.code(), kInvalidArgument);
-  EXPECT_THAT(status.message(),
-              HasSubstr("kTimeSinceInputInSeconds` must only be used with "
-                        "`source_out_of_range_behavior` of `kClamp"));
+  EXPECT_THAT(
+      BrushFamily::Create(brush_tip, BrushPaint{}).status(),
+      StatusIs(kInvalidArgument,
+               HasSubstr("`kTimeSince*` sources can only be used with a "
+                         "`source_out_of_range_behavior` of `kClamp`")));
 }
 
 TEST(BrushFamilyTest, CreateWithInvalidBehaviorTargetModifierRange) {
@@ -855,28 +848,6 @@ TEST(BrushFamilyTest, CreateWithInvalidEnabledToolTypes) {
   absl::Status status = BrushFamily::Create(brush_tip, BrushPaint{}).status();
   EXPECT_EQ(status.code(), kInvalidArgument);
   EXPECT_THAT(status.message(), HasSubstr("enabled_tool_types"));
-}
-
-TEST(BrushFamilyTest, CreateWithInvalidBehaviorFallbackSource) {
-  BrushTip brush_tip = {
-      .behaviors = {BrushBehavior{{
-          BrushBehavior::SourceNode{
-              .source = BrushBehavior::Source::kOrientationInRadians,
-              .source_value_range = {0, 3},
-          },
-          BrushBehavior::FallbackFilterNode{
-              .is_fallback_for =
-                  static_cast<BrushBehavior::OptionalInputProperty>(-1),
-          },
-          BrushBehavior::TargetNode{
-              .target = BrushBehavior::Target::kPinchOffset,
-              .target_modifier_range = {0, .2},
-          },
-      }}},
-  };
-  absl::Status status = BrushFamily::Create(brush_tip, BrushPaint{}).status();
-  EXPECT_EQ(status.code(), kInvalidArgument);
-  EXPECT_THAT(status.message(), HasSubstr("is_fallback_for"));
 }
 
 TEST(BrushFamilyTest, DefaultConstruction) {
