@@ -13,15 +13,15 @@ endif()
 
 # ------------------------------------------------------------------ 库定义
 ## copy_on_write
-add_library(ink_types_internal_copy_on_write INTERFACE)
+add_library(ink_types_internal_copy_on_write INTERFACE copy_on_write.h)
 target_link_libraries(ink_types_internal_copy_on_write INTERFACE
-
+  absl::nullability
   absl::check
 )
 add_library(ink::types_internal::copy_on_write ALIAS ink_types_internal_copy_on_write)
 
 ## float
-add_library(ink_types_internal_float INTERFACE)
+add_library(ink_types_internal_float INTERFACE float.h)
 # 纯头文件，无依赖
 add_library(ink::types_internal::float ALIAS ink_types_internal_float)
 

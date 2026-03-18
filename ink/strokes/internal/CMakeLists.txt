@@ -16,6 +16,7 @@ endif()
 
 #------------------------------------------------------------------- 子目录
 add_subdirectory(brush_tip_extruder)
+add_subdirectory(stroke_input_modeler)
 
 # ------------------------------------------------------------------ 辅助宏
 function(ink_testonly_lib name)
@@ -42,6 +43,22 @@ target_link_libraries(ink_strokes_internal_mutable_multi_mesh
 )
 add_library(ink::strokes::internal::mutable_multi_mesh ALIAS ink_strokes_internal_mutable_multi_mesh)
 
+add_library(ink_strokes_internal_modeled_stroke_input STATIC
+        modeled_stroke_input.cc modeled_stroke_input.h
+)
+target_link_libraries(
+        ink_strokes_internal_modeled_stroke_input PUBLIC
+        ink::geometry_angle
+        ink::geometry_point
+        ink::geometry_vec
+        ink::geometry_internal::lerp
+        ink::strokes::input::stroke_input
+        ink::types_duration
+        ink::types_physical_distance
+)
+add_library(ink::strokes::internal::modeled_stroke_input ALIAS ink_strokes_internal_modeled_stroke_input)
+
+
 ## stroke_shape_update
 add_library(ink_strokes_internal_stroke_shape_update STATIC
   stroke_shape_update.cc stroke_shape_update.h
@@ -59,6 +76,7 @@ add_library(ink_strokes_internal_stroke_outline STATIC
 target_link_libraries(ink_strokes_internal_stroke_outline
   PUBLIC
     absl::algorithm_container
+    absl::nullability
     absl::check
     absl::numeric
     absl::span
@@ -67,14 +85,14 @@ add_library(ink::strokes::internal::stroke_outline ALIAS ink_strokes_internal_st
 target_include_directories(ink_strokes_internal_stroke_outline PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 
 ## extrusion_points
-add_library(ink_strokes_internal_extrusion_points INTERFACE)
+add_library(ink_strokes_internal_extrusion_points INTERFACE extrusion_points.h)
 target_link_libraries(ink_strokes_internal_extrusion_points INTERFACE
   ink::geometry_point
 )
 add_library(ink::strokes::internal::extrusion_points ALIAS ink_strokes_internal_extrusion_points)
 
 ## legacy_vertex
-add_library(ink_strokes_internal_legacy_vertex INTERFACE)
+add_library(ink_strokes_internal_legacy_vertex INTERFACE legacy_vertex.h)
 target_link_libraries(ink_strokes_internal_legacy_vertex INTERFACE
   ink::color
   ink::geometry_point
@@ -107,7 +125,7 @@ target_link_libraries(ink_strokes_internal_constrain_brush_tip_extrusion
     ink_strokes_internal_brush_tip_extrusion
     ink_strokes_internal_brush_tip_state
     ink::geometry_distance
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     absl::check
 )
 add_library(ink::strokes::internal::constrain_brush_tip_extrusion ALIAS ink_strokes_internal_constrain_brush_tip_extrusion)
@@ -116,29 +134,18 @@ add_library(ink::strokes::internal::constrain_brush_tip_extrusion ALIAS ink_stro
 ## stroke_input_modeler
 add_library(ink_strokes_internal_stroke_input_modeler STATIC
   stroke_input_modeler.cc
-  stroke_input_modeler/naive_input_modeler.cc
-  stroke_input_modeler/sliding_window_input_modeler.cc
-  stroke_input_modeler/spring_based_input_modeler.cc
   stroke_input_modeler.h
-  stroke_input_modeler/naive_input_modeler.h
-  stroke_input_modeler/sliding_window_input_modeler.h
-  stroke_input_modeler/spring_based_input_modeler.h
 )
-
 target_link_libraries(ink_strokes_internal_stroke_input_modeler
   PUBLIC
+    ink::strokes::internal::modeled_stroke_input
     ink::brush_family
-    ink::geometry_angle
-    ink::geometry_distance
-    ink::geometry_point
-    ink::geometry_vec
-    ink::geometry_internal::algorithms
-    ink::strokes::input::stroke_input
     ink::strokes::input::stroke_input_batch
+    ink::strokes::internal::input_model_impl
+    ink::strokes::internal::naive_input_modeler
+    ink::strokes::internal::sliding_window_input_modeler
     ink::types_duration
-    ink::types_numbers
-    ink::types_physical_distance
-    absl::cleanup
+    absl::nullability
     absl::check
     absl::status
     absl::span
@@ -160,7 +167,7 @@ target_link_libraries(ink_strokes_internal_brush_tip_state
   PUBLIC
     ink::geometry_angle
     ink::geometry_point
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
 )
 add_library(ink::strokes::internal::brush_tip_state ALIAS ink_strokes_internal_brush_tip_state)
 
@@ -173,7 +180,7 @@ target_link_libraries(ink_strokes_internal_easing_implementation
     ink::easing_function
     ink::geometry_point
     ink::geometry_vec
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     absl::inlined_vector
     absl::overload
     absl::check
@@ -188,7 +195,7 @@ add_library(ink_strokes_internal_noise_generator STATIC
 )
 target_link_libraries(ink_strokes_internal_noise_generator
   PUBLIC
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     absl::check
 )
 add_library(ink::strokes::internal::noise_generator ALIAS ink_strokes_internal_noise_generator)
@@ -202,13 +209,13 @@ target_link_libraries(ink_strokes_internal_brush_tip_modeler_helpers
     ink_strokes_internal_brush_tip_state
     ink_strokes_internal_easing_implementation
     ink_strokes_internal_noise_generator
-    ink_strokes_internal_stroke_input_modeler
+    ink_strokes_internal_modeled_stroke_input
     ink::brush_behavior
     ink::brush_tip
     ink::geometry_angle
     ink::geometry_point
     ink::geometry_vec
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     ink::geometry_internal::modulo
     ink::strokes::input::stroke_input
     ink::types_duration
@@ -227,13 +234,15 @@ target_link_libraries(ink_strokes_internal_brush_tip_modeler
     ink_strokes_internal_brush_tip_modeler_helpers
     ink_strokes_internal_brush_tip_state
     ink_strokes_internal_easing_implementation
-    ink_strokes_internal_stroke_input_modeler
+    ink_strokes_internal_modeled_stroke_input
+    ink_strokes_internal_noise_generator
     ink::brush_behavior
     ink::brush_tip
     ink::geometry_angle
     ink::geometry_point
     ink::types_duration
     absl::algorithm_container
+    absl::nullability
     absl::check
     absl::log
     absl::span
@@ -272,6 +281,7 @@ target_link_libraries(ink_strokes_internal_brush_tip_extrusion
   PUBLIC
     ink_strokes_internal_brush_tip_shape
     ink_strokes_internal_brush_tip_state
+    ink_strokes_internal_rounded_polygon
     ink::geometry_distance
     ink::geometry_rect
     ink::geometry_internal::circle
@@ -319,7 +329,7 @@ target_link_libraries(ink_strokes_internal_stroke_vertex
     ink::geometry_mutable_mesh
     ink::geometry_point
     ink::geometry_vec
-    ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     ink::types_small_array
     absl::algorithm_container
     absl::check
@@ -335,6 +345,7 @@ target_link_libraries(ink_strokes_internal_stroke_shape_builder
   PUBLIC
     ink_strokes_internal_brush_tip_extruder
     ink_strokes_internal_brush_tip_modeler
+    ink_strokes_internal_modeled_stroke_input
     ink_strokes_internal_stroke_input_modeler
     ink_strokes_internal_stroke_outline
     ink_strokes_internal_stroke_shape_update
@@ -345,7 +356,6 @@ target_link_libraries(ink_strokes_internal_stroke_shape_builder
     ink::geometry_mutable_mesh
     ink::types_duration
     absl::inlined_vector
-    absl::check
     absl::span
 )
 add_library(ink::strokes::internal::stroke_shape_builder ALIAS ink_strokes_internal_stroke_shape_builder)

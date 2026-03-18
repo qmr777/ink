@@ -63,22 +63,6 @@ ink_fetch_git(libtess2
   3d2fdd08da550daca02f0638bd6fd93618d9d32b   # 2025-04-26
 )
 
-# Protobuf 官方仓库
-#ink_fetch_git(protobuf
-#  https://github.com/protocolbuffers/protobuf.git
-#  v31.1
-#)
-
-# Skia 巨大，建议本地镜像；这里仍用 FetchContent 示例
-#ink_fetch_git(skia
-#  https://github.com/google/skia.git
-#  fb92a016ef1dd54b027d022e72689497eb5b6c0e   # 2025-09-08
-#)
-
-# Skia 用户配置 overlay（等价于 local_repository）
-#add_subdirectory(skia_user_config)   # 目录里需包含 CMakeLists.txt
-
-
 # ------------------------------------------------------------------ 测试/基准依赖（仅当需要）
 if(INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
   ink_fetch_git(googletest

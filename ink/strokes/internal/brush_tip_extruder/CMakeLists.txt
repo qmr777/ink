@@ -22,6 +22,7 @@ target_link_libraries(ink_strokes_internal_brush_tip_extruder_extruded_vertex
     ink::geometry_point
     ink::geometry_triangle
     ink::geometry_internal::algorithms
+    ink::geometry_internal::lerp
     ink::strokes::internal::legacy_vertex
     ink::strokes::internal::stroke_vertex
     absl::check
@@ -49,7 +50,7 @@ add_library(ink::strokes::internal::brush_tip_extruder::mutable_mesh_view
   ALIAS ink_strokes_internal_brush_tip_extruder_mutable_mesh_view)
 
 ## side
-add_library(ink_strokes_internal_brush_tip_extruder_side INTERFACE)
+add_library(ink_strokes_internal_brush_tip_extruder_side INTERFACE side.h)
 target_link_libraries(ink_strokes_internal_brush_tip_extruder_side INTERFACE
   ink_strokes_internal_brush_tip_extruder_extruded_vertex
   ink_strokes_internal_brush_tip_extruder_mutable_mesh_view
@@ -67,7 +68,12 @@ target_link_libraries(ink_strokes_internal_brush_tip_extruder_derivative_calcula
     ink_strokes_internal_brush_tip_extruder_mutable_mesh_view
     ink_strokes_internal_brush_tip_extruder_side
     ink::geometry_point
+    ink::geometry_segment
+    ink::geometry_triangle
+    ink::geometry_vec
+    ink::geometry_internal::algorithms
     ink::strokes::internal::stroke_vertex
+    absl::algorithm_container
     absl::check
     absl::span
 )
@@ -164,11 +170,13 @@ target_link_libraries(ink_strokes_internal_brush_tip_extruder_geometry
     ink::geometry_internal::algorithms
     ink::geometry_internal::legacy_segment_intersection
     ink::geometry_internal::legacy_triangle_contains
+    ink::geometry_internal::lerp
     ink::strokes::internal::brush_tip_state
     ink::strokes::internal::legacy_vertex
     ink::strokes::internal::stroke_vertex
     absl::algorithm_container
     absl::core_headers
+    absl::nullability
     absl::cleanup
     absl::btree
     absl::flat_hash_map

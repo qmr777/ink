@@ -138,9 +138,7 @@ add_library(ink_geometry_internal_algorithms STATIC
 target_link_libraries(ink_geometry_internal_algorithms
   PUBLIC
     ink::geometry_internal::intersects_internal
-    ink::color
     ink::geometry_affine_transform
-    ink::geometry_angle
     ink::geometry_envelope
     ink::geometry_mesh
     ink::geometry_mutable_mesh
@@ -182,6 +180,7 @@ target_link_libraries(ink_geometry_internal_circle
     ink::geometry_point
     ink::geometry_vec
     absl::check
+    absl::strings
 )
 add_library(ink::geometry_internal::circle ALIAS ink_geometry_internal_circle)
 
@@ -220,6 +219,19 @@ target_link_libraries(ink_geometry_internal_generic_tessellator INTERFACE
   tess2
 )
 add_library(ink::geometry_internal::generic_tessellator ALIAS ink_geometry_internal_generic_tessellator)
+
+add_library(ink_geometry_internal_lerp STATIC
+  lerp.cc lerp.h
+)
+target_link_libraries(
+        ink_geometry_internal_lerp PUBLIC
+        ink::color
+        ink::geometry_angle
+        ink::geometry_point
+        ink::geometry_vec
+        ink::types_duration
+)
+add_library(ink::geometry_internal::lerp ALIAS ink_geometry_internal_lerp)
 
 # ------------------------------------------------------------------ 测试
 #if(INK_BUILD_TESTS)

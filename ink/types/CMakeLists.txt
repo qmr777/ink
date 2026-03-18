@@ -21,21 +21,21 @@ endfunction()
 
 # ------------------------------------------------------------------ 基础库
 ## numbers（头文件 only）
-add_library(ink_types_numbers INTERFACE)
+add_library(ink_types_numbers INTERFACE numbers.h)
 target_include_directories(ink_types_numbers INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_library(ink::types_numbers ALIAS ink_types_numbers)
 
 ## iterator_range（头文件 only）
-add_library(ink_types_iterator_range INTERFACE)
+add_library(ink_types_iterator_range INTERFACE iterator_range.h)
 target_include_directories(ink_types_iterator_range INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_library(ink::types_iterator_range ALIAS ink_types_iterator_range)
 
 ## small_array（头文件 only）
-add_library(ink_types_small_array INTERFACE)
+add_library(ink_types_small_array INTERFACE small_array.h)
 target_link_libraries(ink_types_small_array INTERFACE
   absl::algorithm_container
   absl::check

@@ -73,6 +73,7 @@ target_link_libraries(ink_geometry_segment
   PUBLIC
     ink::geometry_point
     ink::geometry_vec
+    ink::geometry_internal::lerp
     absl::strings
 )
 add_library(ink::geometry_segment ALIAS ink_geometry_segment)

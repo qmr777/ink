@@ -136,6 +136,25 @@ target_link_libraries(ink_brush_family
 )
 add_library(ink::brush_family ALIAS ink_brush_family)
 
+# stock_brushes
+add_library(ink_stock_brushes STATIC
+        stock_brushes.cc
+        stock_brushes.h
+)
+target_link_libraries(ink_stock_brushes
+        PUBLIC
+        ink::brush_behavior
+        ink::brush_coat
+        ink::brush_family
+        ink::brush_tip
+        ink::easing_function
+        ink::geometry_angle
+        absl::check
+        absl::statusor
+        absl::strings
+)
+add_library(ink::stock_brushes ALIAS ink_stock_brushes)
+
 # brush（最外层聚合库）
 add_library(ink_brush STATIC
   brush.cc

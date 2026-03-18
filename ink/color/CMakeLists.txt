@@ -44,6 +44,7 @@ target_link_libraries(ink_color
     ink::color_space
     absl::log
     absl::str_format
+    absl::check
 )
 add_library(ink::color ALIAS ink_color)
 target_include_directories(ink_color PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")

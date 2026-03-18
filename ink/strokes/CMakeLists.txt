@@ -60,12 +60,14 @@ target_link_libraries(ink_strokes_in_progress_stroke
     ink::strokes::input::stroke_input
     ink::strokes::input::stroke_input_batch
     ink::strokes::input::internal::stroke_input_validation_helpers
+    ink::strokes::internal::modeled_stroke_input
     ink::strokes::internal::stroke_input_modeler
     ink::strokes::internal::stroke_shape_builder
     ink::strokes::internal::stroke_shape_update
     ink::strokes::internal::stroke_vertex
     ink::types_duration
 
+    absl::nullability
     absl::flat_hash_set
     absl::inlined_vector
     absl::check
