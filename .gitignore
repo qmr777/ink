@@ -1,0 +1,10 @@
+# Bzlmod lockfile
+MODULE.bazel.lock
+
+# Ignore all bazel-* symlinks.
+/bazel-*
+
+.idea
+**/.idea
+**/.cmake
+**/cmake-build-debug
