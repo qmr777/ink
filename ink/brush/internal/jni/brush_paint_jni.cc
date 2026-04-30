@@ -15,9 +15,11 @@
 #include <jni.h>
 
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "absl/container/flat_hash_set.h"
+#include "absl/functional/overload.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/time/time.h"
@@ -25,6 +27,8 @@
 #include "ink/brush/brush_paint.h"
 #include "ink/brush/color_function.h"
 #include "ink/brush/internal/jni/brush_native_helper.h"
+#include "ink/color/color.h"
+#include "ink/color/internal/jni/color_jni_helper.h"
 #include "ink/geometry/angle.h"
 #include "ink/geometry/internal/jni/mesh_format_native_helper.h"
 #include "ink/geometry/mesh_format.h"
@@ -37,12 +41,15 @@ namespace {
 
 using ::ink::Angle;
 using ::ink::BrushPaint;
+using ::ink::Color;
 using ::ink::ColorFunction;
 using ::ink::MeshFormat;
 using ::ink::Vec;
 using ::ink::brush_internal::AddAttributeIdsRequiredByPaint;
 using ::ink::brush_internal::ValidateBrushPaint;
 using ::ink::brush_internal::ValidateBrushPaintTextureLayer;
+using ::ink::jni::ComputeColorLong;
+using ::ink::jni::JIntToColorSpace;
 using ::ink::jni::JStringToStdString;
 using ::ink::jni::ThrowExceptionFromStatus;
 using ::ink::native::CastToBrushPaint;
@@ -50,6 +57,7 @@ using ::ink::native::CastToColorFunction;
 using ::ink::native::CastToMeshFormat;
 using ::ink::native::CastToTextureLayer;
 using ::ink::native::DeleteNativeBrushPaint;
+using ::ink::native::DeleteNativeColorFunction;
 using ::ink::native::DeleteNativeTextureLayer;
 using ::ink::native::NewNativeBrushPaint;
 using ::ink::native::NewNativeColorFunction;
@@ -78,6 +86,21 @@ BrushPaint::BlendMode JIntToBlendMode(jint val) {
 BrushPaint::SelfOverlap JIntToSelfOverlap(jint val) {
   return static_cast<BrushPaint::SelfOverlap>(val);
 }
+
+jlong ValidateAndHoistColorFunctionOrThrow(ColorFunction::Parameters parameters,
+                                           JNIEnv* env) {
+  ColorFunction color_function{.parameters = std::move(parameters)};
+  if (absl::Status status =
+          ink::brush_internal::ValidateColorFunction(color_function);
+      !status.ok()) {
+    ThrowExceptionFromStatus(env, status);
+    return 0;
+  }
+  return NewNativeColorFunction(std::move(color_function));
+}
+
+static constexpr int kOpacityMultiplier = 0;
+static constexpr int kReplaceColor = 1;
 
 }  // namespace
 
@@ -306,6 +329,60 @@ JNI_METHOD(brush, TextureLayerNative, jint, getWrapYInt)
 JNI_METHOD(brush, TextureLayerNative, jint, getBlendModeInt)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
   return static_cast<jint>(CastToTextureLayer(native_pointer).blend_mode);
+}
+
+// ************ Native Implementation of BrushPaint ColorFunction ************
+
+// Constructs a native BrushPaint ColorFunction and returns a pointer to it as a
+// long.
+
+JNI_METHOD(brush, ColorFunctionNative, jlong, createOpacityMultiplier)
+(JNIEnv* env, jobject thiz, jfloat multiplier) {
+  return ValidateAndHoistColorFunctionOrThrow(
+      ColorFunction::OpacityMultiplier{.multiplier = multiplier}, env);
+}
+
+JNI_METHOD(brush, ColorFunctionNative, jlong, createReplaceColor)
+(JNIEnv* env, jobject thiz, jfloat color_red, jfloat color_green,
+ jfloat color_blue, jfloat color_alpha, jint color_space_id) {
+  return ValidateAndHoistColorFunctionOrThrow(
+      ColorFunction::ReplaceColor{
+          .color = Color::FromFloat(color_red, color_green, color_blue,
+                                    color_alpha, Color::Format::kGammaEncoded,
+                                    JIntToColorSpace(color_space_id))},
+      env);
+}
+
+JNI_METHOD(brush, ColorFunctionNative, void, free)
+(JNIEnv* env, jobject thiz, jlong native_pointer) {
+  DeleteNativeColorFunction(native_pointer);
+}
+
+JNI_METHOD(brush, ColorFunctionNative, jlong, getParametersType)
+(JNIEnv* env, jobject thiz, jlong native_pointer) {
+  constexpr auto visitor = absl::Overload{
+      [](const ColorFunction::OpacityMultiplier&) {
+        return kOpacityMultiplier;
+      },
+      [](const ColorFunction::ReplaceColor&) { return kReplaceColor; },
+  };
+  return static_cast<jint>(
+      std::visit(visitor, CastToColorFunction(native_pointer).parameters));
+}
+
+JNI_METHOD(brush, ColorFunctionNative, jfloat, getOpacityMultiplier)
+(JNIEnv* env, jobject thiz, jlong native_pointer) {
+  return std::get<ColorFunction::OpacityMultiplier>(
+             CastToColorFunction(native_pointer).parameters)
+      .multiplier;
+}
+
+JNI_METHOD(brush, ColorFunctionNative, jlong, computeReplaceColorLong)
+(JNIEnv* env, jobject object, jlong native_pointer) {
+  return ComputeColorLong(env,
+                          std::get<ColorFunction::ReplaceColor>(
+                              CastToColorFunction(native_pointer).parameters)
+                              .color);
 }
 
 }  // extern "C"
