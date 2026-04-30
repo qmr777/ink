@@ -173,13 +173,13 @@ absl::Status ValidateBrushPaintTextureLayer(
         "and `animation_columns`. Got %d > %d * %d",
         layer.animation_frames, layer.animation_rows, layer.animation_columns));
   }
-  if (layer.animation_duration < absl::Milliseconds(1) ||
+  if (layer.animation_duration < absl::ZeroDuration() ||
       layer.animation_duration > absl::Milliseconds(1 << 24) ||
       layer.animation_duration % absl::Milliseconds(1) !=
           absl::ZeroDuration()) {
     return absl::InvalidArgumentError(absl::StrCat(
         "`BrushPaint::TextureLayer::animation_duration` must be "
-        "a whole number of milliseconds in the interval [1, 2^24]. Got ",
+        "a whole number of milliseconds in the interval [0, 2^24]. Got ",
         layer.animation_duration));
   }
   if (!IsValidBrushPaintBlendMode(layer.blend_mode)) {

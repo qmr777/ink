@@ -692,7 +692,7 @@ Domain<BrushPaint> ValidBrushPaint(DomainVariant variant) {
           },
           InRange<int>(1, 1 << 12), InRange<int>(1, 1 << 12)),
       fuzztest::Map([](int64_t ms) { return absl::Milliseconds(ms); },
-                    fuzztest::InRange(1, 1 << 24)));
+                    fuzztest::InRange(0, 1 << 24)));
 }
 
 Domain<BrushTip> ValidBrushTip(DomainVariant variant) {

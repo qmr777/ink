@@ -238,11 +238,15 @@ struct BrushPaint {
     int animation_columns = 1;
 
     // The length of time that it takes to loop through all of the
-    // `animation_frames` frames in the texture. This means that each frame will
-    // be displayed (on average) for `animation_duration / animation_frames`.
-    // Defaults to 1000 milliseconds, but ignored if `animation_frames` is 1
-    // (its default value) because that indicates that animation is disabled.
-    // Must be a whole number of milliseconds between 1 and 2^24 (inclusive).
+    // `animation_frames` frames in the texture (in which case each frame will
+    // be displayed for `animation_duration / animation_frames` on average), or
+    // zero to disable looping animations (in which case the animation frame is
+    // controlled solely by any `kTextureAnimationProgressOffset` behavior
+    // targets). If nonzero, this duration must be a whole number of
+    // milliseconds between 1 and 2^24 (inclusive).
+    //
+    // Note that this duration is ignored if `animation_frames` is 1 (its
+    // default value), because that indicates that animation is disabled.
     absl::Duration animation_duration = absl::Seconds(1);
 
     // The rule by which the texture layers up to and including this one are

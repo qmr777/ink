@@ -602,28 +602,21 @@ TEST(BrushPaintTest, InvalidTextureLayerAnimationDuration) {
           .animation_duration = absl::Seconds(-1)}),
       StatusIs(absl::StatusCode::kInvalidArgument,
                HasSubstr("animation_duration` must be a whole number of "
-                         "milliseconds in the interval [1, 2^24]")));
-  EXPECT_THAT(
-      brush_internal::ValidateBrushPaintTextureLayer(BrushPaint::TextureLayer{
-          .client_texture_id = std::string(kTestTextureId),
-          .animation_duration = absl::ZeroDuration()}),
-      StatusIs(absl::StatusCode::kInvalidArgument,
-               HasSubstr("animation_duration` must be a whole number of "
-                         "milliseconds in the interval [1, 2^24]")));
+                         "milliseconds in the interval [0, 2^24]")));
   EXPECT_THAT(
       brush_internal::ValidateBrushPaintTextureLayer(BrushPaint::TextureLayer{
           .client_texture_id = std::string(kTestTextureId),
           .animation_duration = absl::InfiniteDuration()}),
       StatusIs(absl::StatusCode::kInvalidArgument,
                HasSubstr("animation_duration` must be a whole number of "
-                         "milliseconds in the interval [1, 2^24]")));
+                         "milliseconds in the interval [0, 2^24]")));
   EXPECT_THAT(
       brush_internal::ValidateBrushPaintTextureLayer(BrushPaint::TextureLayer{
           .client_texture_id = std::string(kTestTextureId),
           .animation_duration = absl::Milliseconds(1.5)}),
       StatusIs(absl::StatusCode::kInvalidArgument,
                HasSubstr("animation_duration` must be a whole number of "
-                         "milliseconds in the interval [1, 2^24]")));
+                         "milliseconds in the interval [0, 2^24]")));
 }
 
 TEST(BrushPaintTest, InvalidColorFunction) {
