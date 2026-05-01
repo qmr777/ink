@@ -42,6 +42,7 @@ filegroup(
 cc_library(
     name = "cinterop",
     deps = [
+        ":brush_behavior_native",
         ":brush_behavior_node_native",
         ":easing_function_native",
     ],
@@ -73,6 +74,7 @@ cc_library(
     srcs = ["brush_behavior_jni.cc"],
     tags = ["keep_dep"],
     deps = [
+        ":brush_behavior_native",
         ":brush_native_helper",
         "//ink/brush",
         "//ink/brush:brush_behavior",
@@ -90,6 +92,20 @@ cc_library(
         ],
     }),
     alwayslink = 1,
+)
+
+cc_library(
+    name = "brush_behavior_native",
+    srcs = ["brush_behavior_native.cc"],
+    hdrs = ["brush_behavior_native.h"],
+    deps = [
+        ":brush_native_helper",
+        "//ink/brush:brush_behavior",
+        "//ink/jni/internal:status_jni_helper",
+        "@com_google_absl//absl/functional:overload",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+    ],
 )
 
 cc_library(
