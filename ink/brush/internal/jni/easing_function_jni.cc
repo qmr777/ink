@@ -49,11 +49,11 @@ JNI_METHOD(brush_behavior, EasingFunctionNative, jlong, createSteps)
 
 JNI_METHOD(brush_behavior, EasingFunctionNative, jlong, createLinear)
 (JNIEnv* env, jobject thiz, jfloatArray points_array) {
-  jsize num_points = env->GetArrayLength(points_array) / 2;
+  jsize num_coords = env->GetArrayLength(points_array);
   jfloat* points_elements = env->GetFloatArrayElements(points_array, nullptr);
   ABSL_CHECK(points_elements != nullptr);
   jlong result = EasingFunctionNative_createLinear(
-      env, points_elements, num_points, &ThrowExceptionFromStatusCallback);
+      env, points_elements, num_coords, &ThrowExceptionFromStatusCallback);
   // Don't need to copy back the array, which is not modified.
   env->ReleaseFloatArrayElements(points_array, points_elements, JNI_ABORT);
   return result;

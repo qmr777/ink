@@ -92,12 +92,12 @@ int64_t EasingFunctionNative_createSteps(
 }
 
 int64_t EasingFunctionNative_createLinear(
-    void* jni_env_pass_through, const float* points, int num_points,
+    void* jni_env_pass_through, const float* points, int num_coords,
     void (*throw_from_status_callback)(void*, int, const char*)) {
   std::vector<Point> points_vector;
-  points_vector.reserve(num_points);
-  for (int i = 0; i < num_points; ++i) {
-    points_vector.push_back(Point{points[2 * i], points[2 * i + 1]});
+  points_vector.reserve(num_coords / 2);
+  for (int i = 0; i < num_coords; i += 2) {
+    points_vector.push_back(Point{points[i], points[i + 1]});
   }
   return ValidateAndHoistEasingFunction(
       jni_env_pass_through,

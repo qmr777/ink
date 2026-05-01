@@ -51,10 +51,10 @@ int64_t EasingFunctionNative_createCubicBezier(
 // EasingFunction::Linear parameters and returns a pointer to it as
 // int64_t, suitable for wrapping in a Kotlin EasingFunction.
 // The points argument is a pointer to an array of floats of size
-// 2 * num_points, consisting of interleaved x- and y-coordinates. If validation
+// num_coords, consisting of interleaved x- and y-coordinates. If validation
 // fails, calls throw_from_status_callback as above.
 int64_t EasingFunctionNative_createLinear(
-    void* jni_env_pass_through, const float* points, int num_points,
+    void* jni_env_pass_through, const float* points, int num_coords,
     void (*throw_from_status_callback)(void*, int, const char*));
 
 // Creates a new heap-allocated C++ EasingFunction with
