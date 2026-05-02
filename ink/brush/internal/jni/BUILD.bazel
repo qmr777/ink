@@ -44,6 +44,7 @@ cc_library(
     deps = [
         ":brush_behavior_native",
         ":brush_behavior_node_native",
+        ":brush_tip_native",
         ":easing_function_native",
     ],
 )
@@ -109,6 +110,22 @@ cc_library(
 )
 
 cc_library(
+    name = "brush_tip_native",
+    srcs = ["brush_tip_native.cc"],
+    hdrs = ["brush_tip_native.h"],
+    deps = [
+        ":brush_native_helper",
+        "//ink/brush:brush_behavior",
+        "//ink/brush:brush_tip",
+        "//ink/geometry:angle",
+        "//ink/geometry:vec",
+        "//ink/types:duration",
+        "@com_google_absl//absl/log:absl_check",
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "brush_behavior_node_jni",
     srcs = ["brush_behavior_node_jni.cc"],
     tags = ["keep_dep"],
@@ -149,6 +166,7 @@ cc_library(
     tags = ["keep_dep"],
     deps = [
         ":brush_native_helper",
+        ":brush_tip_native",
         "//ink/brush",
         "//ink/brush:brush_behavior",
         "//ink/brush:brush_tip",
