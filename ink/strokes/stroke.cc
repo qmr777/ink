@@ -212,4 +212,12 @@ void Stroke::RegenerateShape() {
   ABSL_DCHECK_EQ(shape_.RenderGroupCount(), brush_.CoatCount());
 }
 
+std::vector<Stroke> Stroke::PartialErase(
+    const PartitionedMesh& eraser_shape,
+    const AffineTransform& eraser_transform,
+    const AffineTransform& stroke_transform) const {
+  // TODO(b/504681427): Implement mesh subtraction.
+  return {*this};
+}
+
 }  // namespace ink

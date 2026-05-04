@@ -40,6 +40,7 @@ cc_library(
         ":stroke_jni_helper",
         "//ink/brush",
         "//ink/brush/internal/jni:brush_native_helper",
+        "//ink/geometry:affine_transform",
         "//ink/geometry:partitioned_mesh",
         "//ink/geometry/internal/jni:partitioned_mesh_native_helper",
         "//ink/jni/internal:jni_defines",

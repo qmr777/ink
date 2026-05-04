@@ -608,5 +608,19 @@ void CanConstructStrokeFromAnyInputBatch(const Brush& brush,
 FUZZ_TEST(DISABLED_StrokeTest, CanConstructStrokeFromAnyInputBatch)
     .WithDomains(ValidBrush(), ArbitraryStrokeInputBatch());
 
+TEST(StrokeTest, PartialEraseWithEmptyEraserShapeReturnsStroke) {
+  Brush brush = CreateBrush();
+  Stroke stroke(brush);
+  PartitionedMesh empty_eraser_shape;
+  AffineTransform identity = AffineTransform::Identity();
+
+  std::vector<Stroke> result =
+      stroke.PartialErase(empty_eraser_shape, identity, identity);
+
+  ASSERT_THAT(result, SizeIs(1));
+  EXPECT_THAT(result[0].GetBrush(), BrushEq(stroke.GetBrush()));
+  EXPECT_THAT(result[0].GetInputs(), StrokeInputBatchEq(stroke.GetInputs()));
+}
+
 }  // namespace
 }  // namespace ink
