@@ -21,6 +21,7 @@
 #include "ink/brush/internal/jni/brush_native_helper.h"
 #include "ink/color/color.h"
 #include "ink/color/internal/jni/color_jni_helper.h"
+#include "ink/color/internal/jni/color_native_helper.h"
 #include "ink/jni/internal/jni_defines.h"
 #include "ink/jni/internal/status_jni_helper.h"
 
@@ -30,11 +31,11 @@ using ::ink::Brush;
 using ::ink::BrushFamily;
 using ::ink::Color;
 using ::ink::jni::ComputeColorLong;
-using ::ink::jni::JIntToColorSpace;
 using ::ink::jni::ThrowExceptionFromStatus;
 using ::ink::native::CastToBrush;
 using ::ink::native::CastToBrushFamily;
 using ::ink::native::DeleteNativeBrush;
+using ::ink::native::IntToColorSpace;
 using ::ink::native::NewNativeBrush;
 using ::ink::native::NewNativeBrushFamily;
 
@@ -51,7 +52,7 @@ JNI_METHOD(brush, BrushNative, jlong, create)
 
   const Color color = Color::FromFloat(
       color_red, color_green, color_blue, color_alpha,
-      Color::Format::kGammaEncoded, JIntToColorSpace(color_space_id));
+      Color::Format::kGammaEncoded, IntToColorSpace(color_space_id));
 
   auto brush = Brush::Create(family, color, size, epsilon);
   if (!brush.ok()) {

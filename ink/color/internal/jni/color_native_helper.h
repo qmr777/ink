@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,25 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef INK_COLOR_INTERNAL_JNI_COLOR_JNI_HELPER_H_
-#define INK_COLOR_INTERNAL_JNI_COLOR_JNI_HELPER_H_
-
-#include <jni.h>
+#ifndef INK_COLOR_INTERNAL_JNI_COLOR_NATIVE_HELPER_H_
+#define INK_COLOR_INTERNAL_JNI_COLOR_NATIVE_HELPER_H_
 
 #include <cstdint>
 
 #include "ink/color/color.h"
 #include "ink/color/color_space.h"
 
-namespace ink::jni {
+namespace ink::native {
 
-// Converts an Ink `Color` into a Kotlin `ColorLong`.
-jlong ComputeColorLong(JNIEnv* env, const Color& color);
+ColorSpace IntToColorSpace(int color_space_id);
 
-int64_t ComputeColorLongFromComponentsCallback(
-    void* jni_env, int color_space_id, float red_gamma_corrected,
-    float green_gamma_corrected, float blue_gamma_corrected, float alpha);
+int64_t ComputeColorLong(
+    void* jni_env_pass_through, const Color& color,
+    int64_t (*compute_compose_color_long_from_components_callback)(
+        void*, int, float, float, float, float));
 
-}  // namespace ink::jni
+}  // namespace ink::native
 
-#endif  // INK_COLOR_INTERNAL_JNI_COLOR_JNI_HELPER_H_
+#endif  // INK_COLOR_INTERNAL_JNI_COLOR_NATIVE_HELPER_H_

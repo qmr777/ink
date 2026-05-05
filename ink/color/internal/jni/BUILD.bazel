@@ -23,6 +23,7 @@ cc_library(
     srcs = ["color_jni_helper.cc"],
     hdrs = ["color_jni_helper.h"],
     deps = [
+        ":color_native_helper",
         "//ink/color",
         "//ink/color:color_space",
         "//ink/jni/internal:jni_jvm_interface",
@@ -33,4 +34,15 @@ cc_library(
             "@rules_jni//jni",
         ],
     }),
+)
+
+cc_library(
+    name = "color_native_helper",
+    srcs = ["color_native_helper.cc"],
+    hdrs = ["color_native_helper.h"],
+    deps = [
+        "//ink/color",
+        "//ink/color:color_space",
+        "@com_google_absl//absl/log:absl_check",
+    ],
 )

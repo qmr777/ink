@@ -52,8 +52,8 @@ static jclass class_mutable_parallelogram = nullptr;
 static jmethodID method_mutable_parallelogram_set_center_dim_rot_shear =
     nullptr;
 
-static jclass class_color_native = nullptr;
-static jmethodID method_color_native_compose_color_long_from_components =
+static jclass class_color_callbacks = nullptr;
+static jmethodID method_color_callbacks_compose_color_long_from_components =
     nullptr;
 
 static jclass class_input_tool_type = nullptr;
@@ -125,8 +125,8 @@ void UnloadJvmInterface(JNIEnv* env) {
   DeleteCachedClass(env, class_mutable_parallelogram);
   method_mutable_parallelogram_set_center_dim_rot_shear = nullptr;
 
-  DeleteCachedClass(env, class_color_native);
-  method_color_native_compose_color_long_from_components = nullptr;
+  DeleteCachedClass(env, class_color_callbacks);
+  method_color_callbacks_compose_color_long_from_components = nullptr;
 
   DeleteCachedClass(env, class_input_tool_type);
   method_input_tool_type_from = nullptr;
@@ -302,21 +302,21 @@ jmethodID MethodMutableParallelogramSetCenterDimensionsRotationInDegreesAndSkew(
   return method_mutable_parallelogram_set_center_dim_rot_shear;
 }
 
-jclass ClassColorNative(JNIEnv* env) {
-  if (class_color_native == nullptr) {
-    class_color_native =
-        FindAndCacheClass(env, "androidx/ink/brush/ColorNative");
+jclass ClassColorCallbacks(JNIEnv* env) {
+  if (class_color_callbacks == nullptr) {
+    class_color_callbacks =
+        FindAndCacheClass(env, "androidx/ink/brush/ColorCallbacks");
   }
-  return class_color_native;
+  return class_color_callbacks;
 }
 
-jmethodID MethodColorNativeComposeColorLongFromComponents(JNIEnv* env) {
-  if (method_color_native_compose_color_long_from_components == nullptr) {
-    method_color_native_compose_color_long_from_components =
-        GetStaticMethodId(env, ClassColorNative(env),
+jmethodID MethodColorCallbacksComposeColorLongFromComponents(JNIEnv* env) {
+  if (method_color_callbacks_compose_color_long_from_components == nullptr) {
+    method_color_callbacks_compose_color_long_from_components =
+        GetStaticMethodId(env, ClassColorCallbacks(env),
                           "composeColorLongFromComponents", "(IFFFF)J");
   }
-  return method_color_native_compose_color_long_from_components;
+  return method_color_callbacks_compose_color_long_from_components;
 }
 
 jclass ClassInputToolType(JNIEnv* env) {
