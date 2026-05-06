@@ -14,6 +14,8 @@
 
 #include <jni.h>
 
+#include <cstdint>
+
 #include "absl/log/absl_check.h"
 #include "ink/brush/internal/jni/brush_coat_native.h"
 #include "ink/jni/internal/jni_defines.h"
@@ -29,9 +31,15 @@ JNI_METHOD(brush, BrushCoatNative, jlong, create)
       env->GetArrayLength(paint_preferences_native_pointers_array);
   jlong* paint_preferences_native_pointers = env->GetLongArrayElements(
       paint_preferences_native_pointers_array, nullptr);
-  jlong result = BrushCoatNative_create(tip_native_pointer,
-                                        paint_preferences_native_pointers,
-                                        paint_preferences_count);
+  // Both `jlong` and `int64_t` are required to be 64-bit integers which JNI and
+  // Kotlin-cinterop respectively both map to Kotlin `Long`. However, on MacOS
+  // they represent two distinct (though equivalent) types, `jlong` is `long`
+  // but `int64_t` is `long long`.
+  static_assert(sizeof(jlong) == sizeof(int64_t));
+  jlong result = BrushCoatNative_create(
+      tip_native_pointer,
+      reinterpret_cast<int64_t*>(paint_preferences_native_pointers),
+      paint_preferences_count);
   env->ReleaseLongArrayElements(paint_preferences_native_pointers_array,
                                 paint_preferences_native_pointers, JNI_ABORT);
   return result;

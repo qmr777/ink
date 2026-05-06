@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//lib:selects.bzl", "selects")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
@@ -27,8 +28,11 @@ cc_binary(
         "jni.lds",
     ],
     features = ["-legacy_whole_archive"],
-    linkopts = select({
-        "@platforms//os:ios": [
+    linkopts = selects.with_or({
+        (
+            "@platforms//os:ios",
+            "@platforms//os:macos",
+        ): [
             "-Wl,-exported_symbols_list,$(location :exported_symbols.txt)",
         ],
         "//conditions:default": [
