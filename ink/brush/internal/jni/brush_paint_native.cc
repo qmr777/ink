@@ -66,10 +66,6 @@ BrushPaint::TextureOrigin IntToOrigin(int val) {
   return static_cast<BrushPaint::TextureOrigin>(val);
 }
 
-BrushPaint::TextureMapping IntToMapping(int val) {
-  return static_cast<BrushPaint::TextureMapping>(val);
-}
-
 BrushPaint::TextureWrap IntToWrap(int val) {
   return static_cast<BrushPaint::TextureWrap>(val);
 }
@@ -143,6 +139,11 @@ int BrushPaintNative_getTextureLayerCount(int64_t native_ptr) {
   return CastToBrushPaint(native_ptr).texture_layers.size();
 }
 
+int BrushPaintNative_getTextureLayerMappingInt(int64_t native_ptr, int index) {
+  return static_cast<int>(
+      CastToBrushPaint(native_ptr).texture_layers[index].mapping);
+}
+
 int64_t BrushPaintNative_newCopyOfTextureLayer(int64_t native_ptr, int index) {
   return NewNativeTextureLayer(
       CastToBrushPaint(native_ptr).texture_layers[index]);
@@ -190,16 +191,14 @@ bool BrushPaintNative_isCompatibleWithMeshFormat(
 
 // ************ Native C-API of BrushPaint TextureLayer ************
 
-int64_t TextureLayerNative_create(
+int64_t TilingTextureNative_create(
     void* jni_env_pass_through, const char* client_texture_id, float size_x,
     float size_y, float offset_x, float offset_y, float rotation_degrees,
-    int animation_frames, int animation_rows, int animation_columns,
-    int64_t animation_duration_millis, int size_unit, int origin, int mapping,
-    int wrap_x, int wrap_y, int blend_mode,
+    int size_unit, int origin, int wrap_x, int wrap_y, int blend_mode,
     void (*throw_from_status_callback)(void*, int, const char*)) {
   BrushPaint::TextureLayer texture_layer{
       .client_texture_id = client_texture_id,
-      .mapping = IntToMapping(mapping),
+      .mapping = BrushPaint::TextureMapping::kTiling,
       .origin = IntToOrigin(origin),
       .size_unit = IntToSizeUnit(size_unit),
       .wrap_x = IntToWrap(wrap_x),
@@ -207,6 +206,26 @@ int64_t TextureLayerNative_create(
       .size = Vec{size_x, size_y},
       .offset = Vec{offset_x, offset_y},
       .rotation = Angle::Degrees(rotation_degrees),
+      .blend_mode = IntToBlendMode(blend_mode),
+  };
+  if (absl::Status status = ValidateBrushPaintTextureLayer(texture_layer);
+      !status.ok()) {
+    throw_from_status_callback(jni_env_pass_through,
+                               static_cast<int>(status.code()),
+                               status.message().data());
+    return 0;
+  }
+  return NewNativeTextureLayer(std::move(texture_layer));
+}
+
+int64_t StampingTextureNative_create(
+    void* jni_env_pass_through, const char* client_texture_id,
+    int animation_frames, int animation_rows, int animation_columns,
+    int64_t animation_duration_millis, int blend_mode,
+    void (*throw_from_status_callback)(void*, int, const char*)) {
+  BrushPaint::TextureLayer texture_layer{
+      .client_texture_id = client_texture_id,
+      .mapping = BrushPaint::TextureMapping::kStamping,
       .animation_frames = animation_frames,
       .animation_rows = animation_rows,
       .animation_columns = animation_columns,
@@ -231,48 +250,48 @@ const char* TextureLayerNative_getClientTextureId(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).client_texture_id.c_str();
 }
 
-float TextureLayerNative_getSizeX(int64_t native_ptr) {
+float TilingTextureNative_getSizeX(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).size.x;
 }
 
-float TextureLayerNative_getSizeY(int64_t native_ptr) {
+float TilingTextureNative_getSizeY(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).size.y;
 }
 
-float TextureLayerNative_getOffsetX(int64_t native_ptr) {
+float TilingTextureNative_getOffsetX(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).offset.x;
 }
 
-float TextureLayerNative_getOffsetY(int64_t native_ptr) {
+float TilingTextureNative_getOffsetY(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).offset.y;
 }
 
-float TextureLayerNative_getRotationDegrees(int64_t native_ptr) {
+float TilingTextureNative_getRotationDegrees(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).rotation.ValueInDegrees();
 }
 
-int TextureLayerNative_getAnimationFrames(int64_t native_ptr) {
+int StampingTextureNative_getAnimationFrames(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).animation_frames;
 }
 
-int TextureLayerNative_getAnimationRows(int64_t native_ptr) {
+int StampingTextureNative_getAnimationRows(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).animation_rows;
 }
 
-int TextureLayerNative_getAnimationColumns(int64_t native_ptr) {
+int StampingTextureNative_getAnimationColumns(int64_t native_ptr) {
   return CastToTextureLayer(native_ptr).animation_columns;
 }
 
-int64_t TextureLayerNative_getAnimationDurationMillis(int64_t native_ptr) {
+int64_t StampingTextureNative_getAnimationDurationMillis(int64_t native_ptr) {
   return absl::ToInt64Milliseconds(
       CastToTextureLayer(native_ptr).animation_duration);
 }
 
-int TextureLayerNative_getSizeUnitInt(int64_t native_ptr) {
+int TilingTextureNative_getSizeUnitInt(int64_t native_ptr) {
   return static_cast<int>(CastToTextureLayer(native_ptr).size_unit);
 }
 
-int TextureLayerNative_getOriginInt(int64_t native_ptr) {
+int TilingTextureNative_getOriginInt(int64_t native_ptr) {
   return static_cast<int>(CastToTextureLayer(native_ptr).origin);
 }
 
@@ -280,11 +299,11 @@ int TextureLayerNative_getMappingInt(int64_t native_ptr) {
   return static_cast<int>(CastToTextureLayer(native_ptr).mapping);
 }
 
-int TextureLayerNative_getWrapXInt(int64_t native_ptr) {
+int TilingTextureNative_getWrapXInt(int64_t native_ptr) {
   return static_cast<int>(CastToTextureLayer(native_ptr).wrap_x);
 }
 
-int TextureLayerNative_getWrapYInt(int64_t native_ptr) {
+int TilingTextureNative_getWrapYInt(int64_t native_ptr) {
   return static_cast<int>(CastToTextureLayer(native_ptr).wrap_y);
 }
 

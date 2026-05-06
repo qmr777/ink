@@ -72,6 +72,11 @@ JNI_METHOD(brush, BrushPaintNative, jint, getTextureLayerCount)
   return BrushPaintNative_getTextureLayerCount(native_pointer);
 }
 
+JNI_METHOD(brush, BrushPaintNative, jint, getTextureLayerMappingInt)
+(JNIEnv* env, jobject thiz, jlong native_pointer, jint index) {
+  return BrushPaintNative_getTextureLayerMappingInt(native_pointer, index);
+}
+
 JNI_METHOD(brush, BrushPaintNative, jlong, newCopyOfTextureLayer)
 (JNIEnv* env, jobject thiz, jlong native_pointer, jint index) {
   return BrushPaintNative_newCopyOfTextureLayer(native_pointer, index);
@@ -107,19 +112,28 @@ JNI_METHOD(brush, BrushPaintNative, jboolean, isCompatibleWithMeshFormat)
 
 // Native Implementation of BrushPaint.TextureLayer:
 
-JNI_METHOD(brush, TextureLayerNative, jlong, create)
+JNI_METHOD(brush, TilingTextureNative, jlong, create)
 (JNIEnv* env, jobject thiz, jstring client_texture_id, jfloat size_x,
  jfloat size_y, jfloat offset_x, jfloat offset_y, jfloat rotation_degrees,
- jint animation_frames, jint animation_rows, jint animation_columns,
- jlong animation_duration_millis, jint size_unit, jint origin, jint mapping,
- jint wrap_x, jint wrap_y, jint blend_mode) {
+ jint size_unit, jint origin, jint wrap_x, jint wrap_y, jint blend_mode) {
   std::string client_texture_id_str =
       JStringToStdString(env, client_texture_id);
-  return TextureLayerNative_create(
+  return TilingTextureNative_create(
       env, client_texture_id_str.c_str(), size_x, size_y, offset_x, offset_y,
-      rotation_degrees, animation_frames, animation_rows, animation_columns,
-      animation_duration_millis, size_unit, origin, mapping, wrap_x, wrap_y,
-      blend_mode, &ThrowExceptionFromStatusCallback);
+      rotation_degrees, size_unit, origin, wrap_x, wrap_y, blend_mode,
+      &ThrowExceptionFromStatusCallback);
+}
+
+JNI_METHOD(brush, StampingTextureNative, jlong, create)
+(JNIEnv* env, jobject thiz, jstring client_texture_id, jint animation_frames,
+ jint animation_rows, jint animation_columns, jlong animation_duration_millis,
+ jint blend_mode) {
+  std::string client_texture_id_str =
+      JStringToStdString(env, client_texture_id);
+  return StampingTextureNative_create(
+      env, client_texture_id_str.c_str(), animation_frames, animation_rows,
+      animation_columns, animation_duration_millis, blend_mode,
+      &ThrowExceptionFromStatusCallback);
 }
 
 JNI_METHOD(brush, TextureLayerNative, void, free)
@@ -133,59 +147,59 @@ JNI_METHOD(brush, TextureLayerNative, jstring, getClientTextureId)
       TextureLayerNative_getClientTextureId(native_pointer));
 }
 
-JNI_METHOD(brush, TextureLayerNative, jfloat, getSizeX)
+JNI_METHOD(brush, TilingTextureNative, jfloat, getSizeX)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getSizeX(native_pointer);
+  return TilingTextureNative_getSizeX(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jfloat, getSizeY)
+JNI_METHOD(brush, TilingTextureNative, jfloat, getSizeY)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getSizeY(native_pointer);
+  return TilingTextureNative_getSizeY(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jfloat, getOffsetX)
+JNI_METHOD(brush, TilingTextureNative, jfloat, getOffsetX)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getOffsetX(native_pointer);
+  return TilingTextureNative_getOffsetX(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jfloat, getOffsetY)
+JNI_METHOD(brush, TilingTextureNative, jfloat, getOffsetY)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getOffsetY(native_pointer);
+  return TilingTextureNative_getOffsetY(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jfloat, getRotationDegrees)
+JNI_METHOD(brush, TilingTextureNative, jfloat, getRotationDegrees)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getRotationDegrees(native_pointer);
+  return TilingTextureNative_getRotationDegrees(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getAnimationFrames)
+JNI_METHOD(brush, StampingTextureNative, jint, getAnimationFrames)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getAnimationFrames(native_pointer);
+  return StampingTextureNative_getAnimationFrames(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getAnimationRows)
+JNI_METHOD(brush, StampingTextureNative, jint, getAnimationRows)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getAnimationRows(native_pointer);
+  return StampingTextureNative_getAnimationRows(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getAnimationColumns)
+JNI_METHOD(brush, StampingTextureNative, jint, getAnimationColumns)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getAnimationColumns(native_pointer);
+  return StampingTextureNative_getAnimationColumns(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jlong, getAnimationDurationMillis)
+JNI_METHOD(brush, StampingTextureNative, jlong, getAnimationDurationMillis)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getAnimationDurationMillis(native_pointer);
+  return StampingTextureNative_getAnimationDurationMillis(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getSizeUnitInt)
+JNI_METHOD(brush, TilingTextureNative, jint, getSizeUnitInt)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getSizeUnitInt(native_pointer);
+  return TilingTextureNative_getSizeUnitInt(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getOriginInt)
+JNI_METHOD(brush, TilingTextureNative, jint, getOriginInt)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getOriginInt(native_pointer);
+  return TilingTextureNative_getOriginInt(native_pointer);
 }
 
 JNI_METHOD(brush, TextureLayerNative, jint, getMappingInt)
@@ -193,14 +207,14 @@ JNI_METHOD(brush, TextureLayerNative, jint, getMappingInt)
   return TextureLayerNative_getMappingInt(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getWrapXInt)
+JNI_METHOD(brush, TilingTextureNative, jint, getWrapXInt)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getWrapXInt(native_pointer);
+  return TilingTextureNative_getWrapXInt(native_pointer);
 }
 
-JNI_METHOD(brush, TextureLayerNative, jint, getWrapYInt)
+JNI_METHOD(brush, TilingTextureNative, jint, getWrapYInt)
 (JNIEnv* env, jobject thiz, jlong native_pointer) {
-  return TextureLayerNative_getWrapYInt(native_pointer);
+  return TilingTextureNative_getWrapYInt(native_pointer);
 }
 
 JNI_METHOD(brush, TextureLayerNative, jint, getBlendModeInt)

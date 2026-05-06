@@ -32,6 +32,8 @@ void BrushPaintNative_free(int64_t native_ptr);
 
 int BrushPaintNative_getTextureLayerCount(int64_t native_ptr);
 
+int BrushPaintNative_getTextureLayerMappingInt(int64_t native_ptr, int index);
+
 int64_t BrushPaintNative_newCopyOfTextureLayer(int64_t native_ptr, int index);
 
 int BrushPaintNative_getColorFunctionCount(int64_t native_ptr);
@@ -48,45 +50,49 @@ bool BrushPaintNative_isCompatibleWithMeshFormat(
 
 // Native interface for BrushPaint.TextureLayer:
 
-int64_t TextureLayerNative_create(
+int64_t TilingTextureNative_create(
     void* jni_env_pass_through, const char* client_texture_id, float size_x,
     float size_y, float offset_x, float offset_y, float rotation_degrees,
+    int size_unit, int origin, int wrap_x, int wrap_y, int blend_mode,
+    void (*throw_from_status_callback)(void*, int, const char*));
+
+int64_t StampingTextureNative_create(
+    void* jni_env_pass_through, const char* client_texture_id,
     int animation_frames, int animation_rows, int animation_columns,
-    int64_t animation_duration_millis, int size_unit, int origin, int mapping,
-    int wrap_x, int wrap_y, int blend_mode,
+    int64_t animation_duration_millis, int blend_mode,
     void (*throw_from_status_callback)(void*, int, const char*));
 
 void TextureLayerNative_free(int64_t native_ptr);
 
 const char* TextureLayerNative_getClientTextureId(int64_t native_ptr);
 
-float TextureLayerNative_getSizeX(int64_t native_ptr);
+float TilingTextureNative_getSizeX(int64_t native_ptr);
 
-float TextureLayerNative_getSizeY(int64_t native_ptr);
+float TilingTextureNative_getSizeY(int64_t native_ptr);
 
-float TextureLayerNative_getOffsetX(int64_t native_ptr);
+float TilingTextureNative_getOffsetX(int64_t native_ptr);
 
-float TextureLayerNative_getOffsetY(int64_t native_ptr);
+float TilingTextureNative_getOffsetY(int64_t native_ptr);
 
-float TextureLayerNative_getRotationDegrees(int64_t native_ptr);
+float TilingTextureNative_getRotationDegrees(int64_t native_ptr);
 
-int TextureLayerNative_getAnimationFrames(int64_t native_ptr);
+int StampingTextureNative_getAnimationFrames(int64_t native_ptr);
 
-int TextureLayerNative_getAnimationRows(int64_t native_ptr);
+int StampingTextureNative_getAnimationRows(int64_t native_ptr);
 
-int TextureLayerNative_getAnimationColumns(int64_t native_ptr);
+int StampingTextureNative_getAnimationColumns(int64_t native_ptr);
 
-int64_t TextureLayerNative_getAnimationDurationMillis(int64_t native_ptr);
+int64_t StampingTextureNative_getAnimationDurationMillis(int64_t native_ptr);
 
-int TextureLayerNative_getSizeUnitInt(int64_t native_ptr);
+int TilingTextureNative_getSizeUnitInt(int64_t native_ptr);
 
-int TextureLayerNative_getOriginInt(int64_t native_ptr);
+int TilingTextureNative_getOriginInt(int64_t native_ptr);
 
 int TextureLayerNative_getMappingInt(int64_t native_ptr);
 
-int TextureLayerNative_getWrapXInt(int64_t native_ptr);
+int TilingTextureNative_getWrapXInt(int64_t native_ptr);
 
-int TextureLayerNative_getWrapYInt(int64_t native_ptr);
+int TilingTextureNative_getWrapYInt(int64_t native_ptr);
 
 int TextureLayerNative_getBlendModeInt(int64_t native_ptr);
 
