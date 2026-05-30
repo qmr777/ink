@@ -3,8 +3,8 @@
 # ------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.20)
 project(ink
-  VERSION 0.0.1
-  LANGUAGES CXX
+        VERSION 0.0.1
+        LANGUAGES CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -12,8 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # ------------------------------------------------------------------ 选项
-option(INK_BUILD_TESTS    "Build all C++ unit tests" OFF)
-option(INK_BUILD_BENCHMARKS "Build all benchmarks"   OFF)
+option(INK_BUILD_TESTS "Build all C++ unit tests" OFF)
+option(INK_BUILD_BENCHMARKS "Build all benchmarks" OFF)
 
 include(FetchContent)
 
@@ -28,28 +28,29 @@ include(FetchContent)
 
 # ------------------------------------------------------------------ 统一宏：FetchContent 快捷封装
 function(ink_fetch_git name repo tag)
-  FetchContent_Declare(
-    ${name}
-    GIT_REPOSITORY ${repo}
-    GIT_TAG        ${tag}
-  )
-  FetchContent_MakeAvailable(${name})
+    FetchContent_Declare(
+            ${name}
+            GIT_REPOSITORY ${repo}
+            GIT_TAG ${tag}
+    )
+    FetchContent_MakeAvailable(${name})
 endfunction()
 
 # ------------------------------------------------------------------ 生产依赖
 ink_fetch_git(abseil-cpp
-  https://github.com/abseil/abseil-cpp.git
-  20250512.0
+        https://github.com/abseil/abseil-cpp.git
+        20250512.0
 )
 
 ink_fetch_git(ink_stroke_modeler
-  https://github.com/google/ink-stroke-modeler.git
-  2cd45e8683025c28fa2efcf672ad46607e8af869   # 2025-08-28
+        https://github.com/google/ink-stroke-modeler.git
+        #  2cd45e8683025c28fa2efcf672ad46607e8af869   # 2025-08-28
+        e254fa1ea4644070ab760fc5f0f6cc9ac6a4f40c #20260520
 )
 FetchContent_GetProperties(ink_stroke_modeler)
-if(NOT ink_stroke_modeler_POPULATED)
-  FetchContent_Populate(ink_stroke_modeler)
-endif()
+if (NOT ink_stroke_modeler_POPULATED)
+    FetchContent_Populate(ink_stroke_modeler)
+endif ()
 include_directories(${ink_stroke_modeler_SOURCE_DIR})
 
 #ink_fetch_git(libtess2
@@ -59,37 +60,37 @@ include_directories(${ink_stroke_modeler_SOURCE_DIR})
 
 # libtess2不支持CMake，换一个别人fork过的
 ink_fetch_git(libtess2
-  https://github.com/mlogic1/libtess2.git
-  3d2fdd08da550daca02f0638bd6fd93618d9d32b   # 2025-04-26
+        https://github.com/mlogic1/libtess2.git
+        3d2fdd08da550daca02f0638bd6fd93618d9d32b   # 2025-04-26
 )
 
 # ------------------------------------------------------------------ 测试/基准依赖（仅当需要）
-if(INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
-  ink_fetch_git(googletest
-    https://github.com/google/googletest.git
-    v1.17.0
-  )
-  # 让 GoogleTest 提供 GTest::gtest, GTest::gtest_main, GMock::gmock ...
-endif()
+if (INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
+    ink_fetch_git(googletest
+            https://github.com/google/googletest.git
+            v1.17.0
+    )
+    # 让 GoogleTest 提供 GTest::gtest, GTest::gtest_main, GMock::gmock ...
+endif ()
 
-if(INK_BUILD_BENCHMARKS)
-  ink_fetch_git(google_benchmark
-    https://github.com/google/benchmark.git
-    v1.8.3
-  )
-endif()
+if (INK_BUILD_BENCHMARKS)
+    ink_fetch_git(google_benchmark
+            https://github.com/google/benchmark.git
+            v1.8.3
+    )
+endif ()
 
-if(INK_BUILD_TESTS)
-  ink_fetch_git(fuzztest
-    https://github.com/google/fuzztest.git
-    2025-02-14
-  )
-  # FuzzTest 依赖 riegeli，提前拉取高版本以规避 Abseil 冲突
-#  ink_fetch_git(riegeli
-#    https://github.com/google/riegeli.git
-#    0.0.0-20250706-c4d1f27
-#  )
-endif()
+if (INK_BUILD_TESTS)
+    ink_fetch_git(fuzztest
+            https://github.com/google/fuzztest.git
+            2025-02-14
+    )
+    # FuzzTest 依赖 riegeli，提前拉取高版本以规避 Abseil 冲突
+    #  ink_fetch_git(riegeli
+    #    https://github.com/google/riegeli.git
+    #    0.0.0-20250706-c4d1f27
+    #  )
+endif ()
 
 # ------------------------------------------------------------------ 导出统一目标
 # 现在所有依赖都已生成::目标，例如：
@@ -178,6 +179,7 @@ target_link_libraries(ink INTERFACE
         ink::strokes::internal::stroke_input_modeler
         ink::strokes::internal::stroke_shape_builder
         ink::strokes::internal::stroke_shape_update
+        ink::strokes::internal::stroke_subtraction
         ink::strokes::internal::stroke_vertex
         ink::strokes::internal::constrain_brush_tip_extrusion
 
