@@ -7,12 +7,12 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 沿用顶层选项
-if(NOT DEFINED INK_BUILD_TESTS)
-  set(INK_BUILD_TESTS ON)
-endif()
-if(NOT DEFINED INK_BUILD_BENCHMARKS)
-  set(INK_BUILD_BENCHMARKS ON)
-endif()
+if (NOT DEFINED INK_BUILD_TESTS)
+    set(INK_BUILD_TESTS ON)
+endif ()
+if (NOT DEFINED INK_BUILD_BENCHMARKS)
+    set(INK_BUILD_BENCHMARKS ON)
+endif ()
 
 # ------------------------------------------------------------------ 子目录（顺序敏感）
 add_subdirectory(input)   # 提供 stroke_input / stroke_input_batch / ...
@@ -21,61 +21,64 @@ add_subdirectory(internal) # 提供 stroke_input_modeler / stroke_shape_builder 
 # ------------------------------------------------------------------ 主库
 ## stroke
 add_library(ink_strokes_stroke STATIC
-  stroke.cc stroke.h
+        stroke.cc stroke.h
 )
 target_link_libraries(ink_strokes_stroke
-  PUBLIC
-    ink::brush
-    ink::brush_coat
-    ink::brush_family
-    ink::color
-    ink::geometry_mutable_mesh
-    ink::geometry_partitioned_mesh
-    ink::strokes::input::stroke_input_batch
-    ink::strokes::internal::stroke_input_modeler
-    ink::strokes::internal::stroke_shape_builder
-    ink::strokes::internal::stroke_vertex
-    ink::types_duration
-    absl::check
-    absl::log
-    absl::status
-    absl::statusor
-    absl::span
+        PUBLIC
+        ink::brush
+        ink::brush_coat
+        ink::brush_family
+        ink::color
+        ink::geometry_affine_transform
+        ink::geometry_mesh
+        ink::geometry_partitioned_mesh
+        ink::strokes::input::stroke_input_batch
+        ink::strokes::internal::stroke_input_modeler
+        ink::strokes::internal::stroke_shape_builder
+        ink::strokes::internal::stroke_subtraction
+        ink::strokes::internal::stroke_vertex
+        ink::types_duration
+        absl::algorithm_container
+        absl::check
+        absl::log
+        absl::status
+        absl::statusor
+        absl::span
 )
 add_library(ink::strokes::stroke ALIAS ink_strokes_stroke)
 
 ## in_progress_stroke
 add_library(ink_strokes_in_progress_stroke STATIC
-  in_progress_stroke.cc in_progress_stroke.h
+        in_progress_stroke.cc in_progress_stroke.h
 )
 target_link_libraries(ink_strokes_in_progress_stroke
-  PUBLIC
-    ink::strokes::stroke
-    ink::brush
-    ink::brush_coat
-    ink::geometry_envelope
-    ink::geometry_mesh_format
-    ink::geometry_mutable_mesh
-    ink::geometry_partitioned_mesh
-    ink::strokes::input::stroke_input
-    ink::strokes::input::stroke_input_batch
-    ink::strokes::input::internal::stroke_input_validation_helpers
-    ink::strokes::internal::modeled_stroke_input
-    ink::strokes::internal::stroke_input_modeler
-    ink::strokes::internal::stroke_shape_builder
-    ink::strokes::internal::stroke_shape_update
-    ink::strokes::internal::stroke_vertex
-    ink::types_duration
+        PUBLIC
+        ink::strokes::stroke
+        ink::brush
+        ink::brush_coat
+        ink::geometry_envelope
+        ink::geometry_mesh_format
+        ink::geometry_mutable_mesh
+        ink::geometry_partitioned_mesh
+        ink::strokes::input::stroke_input
+        ink::strokes::input::stroke_input_batch
+        ink::strokes::input::internal::stroke_input_validation_helpers
+        ink::strokes::internal::modeled_stroke_input
+        ink::strokes::internal::stroke_input_modeler
+        ink::strokes::internal::stroke_shape_builder
+        ink::strokes::internal::stroke_shape_update
+        ink::strokes::internal::stroke_vertex
+        ink::types_duration
 
-    absl::nullability
-    absl::flat_hash_set
-    absl::inlined_vector
-    absl::check
-    absl::log
-    absl::status
-    absl::statusor
-    absl::str_format
-    absl::span
+        absl::nullability
+        absl::flat_hash_set
+        absl::inlined_vector
+        absl::check
+        absl::log
+        absl::status
+        absl::statusor
+        absl::str_format
+        absl::span
 )
 add_library(ink::strokes::in_progress_stroke ALIAS ink_strokes_in_progress_stroke)
 
