@@ -39,7 +39,7 @@ endfunction()
 # ------------------------------------------------------------------ 生产依赖
 ink_fetch_git(abseil-cpp
         https://github.com/abseil/abseil-cpp.git
-        20250512.0
+        20260526.0
 )
 
 ink_fetch_git(ink_stroke_modeler

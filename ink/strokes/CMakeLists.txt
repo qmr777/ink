@@ -42,6 +42,7 @@ target_link_libraries(ink_strokes_stroke
         absl::check
         absl::log
         absl::status
+        absl::status_macros
         absl::statusor
         absl::span
 )
@@ -69,13 +70,13 @@ target_link_libraries(ink_strokes_in_progress_stroke
         ink::strokes::internal::stroke_shape_update
         ink::strokes::internal::stroke_vertex
         ink::types_duration
-
         absl::nullability
         absl::flat_hash_set
         absl::inlined_vector
         absl::check
         absl::log
         absl::status
+        absl::status_macros
         absl::statusor
         absl::str_format
         absl::span
