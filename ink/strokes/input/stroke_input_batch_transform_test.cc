@@ -16,7 +16,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "absl/status/status.h"
+#include "absl/status/status_matchers.h"
 #include "ink/geometry/affine_transform.h"
 #include "ink/geometry/angle.h"
 #include "ink/strokes/input/stroke_input.h"
@@ -26,6 +26,8 @@
 
 namespace ink {
 namespace {
+
+using ::absl_testing::IsOk;
 
 constexpr auto kPreserveDuration =
     StrokeInputBatch::TransformInvariant::kPreserveDuration;
@@ -90,8 +92,8 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   StrokeInput input = MakeValidTestInput();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(input));
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(input));
+  ASSERT_THAT(batch.Append(input), IsOk());
+  ASSERT_THAT(expected_batch.Append(input), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -103,9 +105,9 @@ TEST(StrokeInputBatchTransformTest, PreserveDurationOneInputPointScaleX) {
   StrokeInputBatch batch;
   StrokeInput input = MakeValidTestInput();
   StrokeInputBatch expected_batch;
-  ASSERT_EQ(absl::OkStatus(), batch.Append(input));
+  ASSERT_THAT(batch.Append(input), IsOk());
   input.position.x *= 10;
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(input));
+  ASSERT_THAT(expected_batch.Append(input), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -118,8 +120,8 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -131,11 +133,11 @@ TEST(StrokeInputBatchTransformTest, PreserveDurationMultipleInputPointsScaleX) {
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.x *= 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -147,11 +149,11 @@ TEST(StrokeInputBatchTransformTest, PreserveDurationMultipleInputPointsScaleY) {
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.y *= 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -164,12 +166,12 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.x *= 5;
     inputs[i].position.y *= 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -182,11 +184,11 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.x += 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -199,11 +201,11 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.x -= 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 
@@ -216,11 +218,11 @@ TEST(StrokeInputBatchTransformTest,
   StrokeInputBatch batch;
   StrokeInputBatch expected_batch;
   std::vector<StrokeInput> inputs = MakeValidTestInputSequence();
-  ASSERT_EQ(absl::OkStatus(), batch.Append(inputs));
+  ASSERT_THAT(batch.Append(inputs), IsOk());
   for (int i = 0; i < inputs.size(); ++i) {
     inputs[i].position.y += 10;
   }
-  ASSERT_EQ(absl::OkStatus(), expected_batch.Append(inputs));
+  ASSERT_THAT(expected_batch.Append(inputs), IsOk());
 
   batch.Transform(transform, kPreserveDuration);
 

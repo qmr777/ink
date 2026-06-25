@@ -21,7 +21,6 @@
 #include <vector>
 
 #include "absl/functional/overload.h"
-#include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "ink/brush/brush_behavior.h"
 #include "ink/brush/internal/jni/brush_native_helper.h"
@@ -53,7 +52,8 @@ extern "C" {
 int64_t BrushBehaviorNative_createFromOrderedNodes(
     void* jni_env_pass_through, const int64_t* node_native_pointers,
     int num_nodes, const char* developer_comment,
-    void (*throw_from_status_callback)(void*, int, const char*)) {
+    void (*throw_from_status_callback)(void* jni_env, int status_code,
+                                       const char* status_str)) {
   BrushBehavior brush_behavior{.developer_comment = developer_comment};
   brush_behavior.nodes.reserve(num_nodes);
   for (int i = 0; i < num_nodes; ++i) {
@@ -64,7 +64,7 @@ int64_t BrushBehaviorNative_createFromOrderedNodes(
       !status.ok()) {
     throw_from_status_callback(jni_env_pass_through,
                                static_cast<int>(status.code()),
-                               status.message().data());
+                               status.ToString().c_str());
     return 0;
   }
   return NewNativeBrushBehavior(std::move(brush_behavior));

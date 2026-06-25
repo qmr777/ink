@@ -6,203 +6,203 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 沿用顶层选项
-if(NOT DEFINED INK_BUILD_TESTS)
-  set(INK_BUILD_TESTS OFF)
-endif()
-if(NOT DEFINED INK_BUILD_BENCHMARKS)
-  set(INK_BUILD_BENCHMARKS OFF)
-endif()
+if (NOT DEFINED INK_BUILD_TESTS)
+    set(INK_BUILD_TESTS OFF)
+endif ()
+if (NOT DEFINED INK_BUILD_BENCHMARKS)
+    set(INK_BUILD_BENCHMARKS OFF)
+endif ()
 
 add_subdirectory(internal)
 
 # ------------------------------------------------------------------ 辅助宏
 function(ink_testonly_lib name)
-  add_library(${name} STATIC ${ARGN})
-  set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL ON)
+    add_library(${name} STATIC ${ARGN})
+    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL ON)
 endfunction()
 
 function(ink_cc_test name)
-  add_executable(${name} ${ARGN})
-  target_link_libraries(${name} PRIVATE ${ARGN}_deps)
-  gtest_discover_tests(${name})
+    add_executable(${name} ${ARGN})
+    target_link_libraries(${name} PRIVATE ${ARGN}_deps)
+    gtest_discover_tests(${name})
 endfunction()
 
 # ------------------------------------------------------------------ 基础几何库
 ## angle
 add_library(ink_geometry_angle STATIC
-  angle.cc angle.h
+        angle.cc angle.h
 )
 target_link_libraries(ink_geometry_angle
-  PUBLIC
-    ink::geometry_internal::modulo
-    ink::types_numbers
-    absl::str_format
+        PUBLIC
+        ink::geometry_internal::modulo
+        ink::types_numbers
+        absl::str_format
 )
 add_library(ink::geometry_angle ALIAS ink_geometry_angle)
 target_include_directories(ink_geometry_angle PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 ## vec
 add_library(ink_geometry_vec STATIC
-  vec.cc vec.h
+        vec.cc vec.h
 )
 target_link_libraries(ink_geometry_vec
-  PUBLIC
-    ink::geometry_angle
-    ink::types_numbers
-    absl::check
-    absl::str_format
+        PUBLIC
+        ink::geometry_angle
+        ink::types_numbers
+        absl::check
+        absl::str_format
 )
 add_library(ink::geometry_vec ALIAS ink_geometry_vec)
 
 ## point
 add_library(ink_geometry_point STATIC
-  point.cc point.h
+        point.cc point.h
 )
 target_link_libraries(ink_geometry_point
-  PUBLIC
-    ink::geometry_vec
-    absl::str_format
+        PUBLIC
+        ink::geometry_vec
+        absl::str_format
 )
 add_library(ink::geometry_point ALIAS ink_geometry_point)
 
 ## segment
 add_library(ink_geometry_segment STATIC
-  segment.cc segment.h
+        segment.cc segment.h
 )
 target_link_libraries(ink_geometry_segment
-  PUBLIC
-    ink::geometry_point
-    ink::geometry_vec
-    ink::geometry_internal::lerp
-    absl::strings
+        PUBLIC
+        ink::geometry_point
+        ink::geometry_vec
+        ink::geometry_internal::lerp
+        absl::strings
 )
 add_library(ink::geometry_segment ALIAS ink_geometry_segment)
 
 ## rect
 add_library(ink_geometry_rect STATIC
-  rect.cc rect.h
+        rect.cc rect.h
 )
 target_link_libraries(ink_geometry_rect
-  PUBLIC
-    ink::geometry_point
-    ink::geometry_segment
-    ink::geometry_vec
-    absl::check
-    absl::str_format
+        PUBLIC
+        ink::geometry_point
+        ink::geometry_segment
+        ink::geometry_vec
+        absl::check
+        absl::str_format
 )
 add_library(ink::geometry_rect ALIAS ink_geometry_rect)
 
 ## triangle
 add_library(ink_geometry_triangle STATIC
-  triangle.cc triangle.h
+        triangle.cc triangle.h
 )
 target_link_libraries(ink_geometry_triangle
-  PUBLIC
-    ink::geometry_point
-    ink::geometry_segment
-    ink::geometry_vec
-    absl::check
-    absl::str_format
+        PUBLIC
+        ink::geometry_point
+        ink::geometry_segment
+        ink::geometry_vec
+        absl::check
+        absl::str_format
 )
 add_library(ink::geometry_triangle ALIAS ink_geometry_triangle)
 
 ## quad
 add_library(ink_geometry_quad STATIC
-  quad.cc quad.h
+        quad.cc quad.h
 )
 target_link_libraries(ink_geometry_quad
-  PUBLIC
-    ink::geometry_angle
-    ink::geometry_point
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_vec
-    absl::check
-    absl::log
+        PUBLIC
+        ink::geometry_angle
+        ink::geometry_point
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_vec
+        absl::check
+        absl::log
 )
 add_library(ink::geometry_quad ALIAS ink_geometry_quad)
 
 ## envelope
 add_library(ink_geometry_envelope STATIC
-  envelope.cc envelope.h
+        envelope.cc envelope.h
 )
 target_link_libraries(ink_geometry_envelope
-  PUBLIC
-    ink::geometry_point
-    ink::geometry_quad
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_triangle
-    absl::str_format
+        PUBLIC
+        ink::geometry_point
+        ink::geometry_quad
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_triangle
+        absl::str_format
 )
 add_library(ink::geometry_envelope ALIAS ink_geometry_envelope)
 
 ## affine_transform
 add_library(ink_geometry_affine_transform STATIC
-  affine_transform.cc affine_transform.h
+        affine_transform.cc affine_transform.h
 )
 target_link_libraries(ink_geometry_affine_transform
-  PUBLIC
-    ink::geometry_angle
-    ink::geometry_point
-    ink::geometry_quad
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_triangle
-    ink::geometry_vec
-    absl::strings
+        PUBLIC
+        ink::geometry_angle
+        ink::geometry_point
+        ink::geometry_quad
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_triangle
+        ink::geometry_vec
+        absl::strings
 )
 add_library(ink::geometry_affine_transform ALIAS ink_geometry_affine_transform)
 
 ## intersects
 add_library(ink_geometry_intersects STATIC
-  intersects.cc intersects.h
+        intersects.cc intersects.h
 )
 target_link_libraries(ink_geometry_intersects
-  PUBLIC
-    ink::geometry_affine_transform
-    ink::geometry_mesh_index_types
-    ink::geometry_partitioned_mesh
-    ink::geometry_point
-    ink::geometry_quad
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_triangle
-    ink::geometry_internal::algorithms
-    ink::geometry_internal::intersects_internal
+        PUBLIC
+        ink::geometry_affine_transform
+        ink::geometry_mesh_index_types
+        ink::geometry_partitioned_mesh
+        ink::geometry_point
+        ink::geometry_quad
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_triangle
+        ink::geometry_internal::algorithms
+        ink::geometry_internal::intersects_internal
 )
 add_library(ink::geometry_intersects ALIAS ink_geometry_intersects)
 
 ## distance
 add_library(ink_geometry_distance STATIC
-  distance.cc distance.h
+        distance.cc distance.h
 )
 target_link_libraries(ink_geometry_distance
-  PUBLIC
-    ink::geometry_intersects
-    ink::geometry_point
-    ink::geometry_quad
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_triangle
+        PUBLIC
+        ink::geometry_intersects
+        ink::geometry_point
+        ink::geometry_quad
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_triangle
 )
 add_library(ink::geometry_distance ALIAS ink_geometry_distance)
 
 ## mesh_format
 add_library(ink_geometry_mesh_format STATIC
-  mesh_format.cc mesh_format.h
+        mesh_format.cc mesh_format.h
 )
 target_link_libraries(ink_geometry_mesh_format
-  PUBLIC
-    ink::geometry_internal::mesh_constants
-    ink::types_small_array
-    absl::algorithm_container
-    absl::flat_hash_set
-    absl::log
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::geometry_internal::mesh_constants
+        ink::types_small_array
+        absl::algorithm_container
+        absl::flat_hash_set
+        absl::log
+        absl::status
+        absl::statusor
+        absl::strings
+        absl::span
 )
 add_library(ink::geometry_mesh_format ALIAS ink_geometry_mesh_format)
 target_include_directories(ink_geometry_mesh_format PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
@@ -210,137 +210,140 @@ target_include_directories(ink_geometry_mesh_format PUBLIC "$<BUILD_INTERFACE:${
 ## mesh_index_types
 add_library(ink_geometry_mesh_index_types INTERFACE)
 target_include_directories(ink_geometry_mesh_index_types INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}
+        mesh_index_types.h
 )
 add_library(ink::geometry_mesh_index_types ALIAS ink_geometry_mesh_index_types)
 
 ## mesh_packing_types
 add_library(ink_geometry_mesh_packing_types STATIC
-  mesh_packing_types.cc mesh_packing_types.h
+        mesh_packing_types.cc mesh_packing_types.h
 )
 target_link_libraries(ink_geometry_mesh_packing_types
-  PUBLIC
-    ink::types_small_array
-    absl::str_format
+        PUBLIC
+        ink::types_small_array
+        absl::str_format
 )
 add_library(ink::geometry_mesh_packing_types ALIAS ink_geometry_mesh_packing_types)
 target_include_directories(ink_geometry_mesh_packing_types PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>")
 
 ## mutable_mesh
 add_library(ink_geometry_mutable_mesh STATIC
-  mutable_mesh.cc mutable_mesh.h
+        mutable_mesh.cc mutable_mesh.h
 )
 target_link_libraries(ink_geometry_mutable_mesh
-  PUBLIC
-    ink::geometry_envelope
-    ink::geometry_mesh
-    ink::geometry_mesh_format
-    ink::geometry_mesh_packing_types
-    ink::geometry_point
-    ink::geometry_rect
-    ink::geometry_triangle
-    ink::geometry_vec
-    ink::geometry_internal::mesh_packing
-    ink::types_small_array
-    ink::types_internal::float
-    absl::algorithm_container
-
-    absl::flat_hash_map
-    absl::flat_hash_set
-    absl::inlined_vector
-    absl::check
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::geometry_envelope
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_mesh_packing_types
+        ink::geometry_point
+        ink::geometry_rect
+        ink::geometry_triangle
+        ink::geometry_vec
+        ink::geometry_internal::mesh_packing
+        ink::types_small_array
+        ink::types_internal::float
+        absl::algorithm_container
+        absl::nullability
+        absl::flat_hash_map
+        absl::flat_hash_set
+        absl::inlined_vector
+        absl::check
+        absl::status
+        absl::status_macros
+        absl::statusor
+        absl::strings
+        absl::span
 )
 add_library(ink::geometry_mutable_mesh ALIAS ink_geometry_mutable_mesh)
 
 ## mesh
 add_library(ink_geometry_mesh STATIC
-  mesh.cc mesh.h
+        mesh.cc mesh.h
 )
 target_link_libraries(ink_geometry_mesh
-  PUBLIC
-    ink::geometry_envelope
-    ink::geometry_mesh_format
-    ink::geometry_mesh_packing_types
-    ink::geometry_point
-    ink::geometry_triangle
-    ink::geometry_internal::mesh_packing
-    ink::types_small_array
-    ink::types_internal::float
-    absl::algorithm_container
-
-    absl::check
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::geometry_envelope
+        ink::geometry_mesh_format
+        ink::geometry_mesh_packing_types
+        ink::geometry_point
+        ink::geometry_triangle
+        ink::geometry_internal::mesh_packing
+        ink::types_small_array
+        ink::types_internal::float
+        absl::algorithm_container
+        absl::nullability
+        absl::check
+        absl::status
+        absl::status_macros
+        absl::statusor
+        absl::strings
+        absl::span
 )
 add_library(ink::geometry_mesh ALIAS ink_geometry_mesh)
 
 ## partitioned_mesh
 add_library(ink_geometry_partitioned_mesh STATIC
-  partitioned_mesh.cc partitioned_mesh.h
+        partitioned_mesh.cc partitioned_mesh.h
 )
 target_link_libraries(ink_geometry_partitioned_mesh
-  PUBLIC
-    ink::geometry_affine_transform
-    ink::geometry_envelope
-    ink::geometry_mesh
-    ink::geometry_mesh_format
-    ink::geometry_mesh_index_types
-    ink::geometry_mesh_packing_types
-    ink::geometry_mutable_mesh
-    ink::geometry_point
-    ink::geometry_quad
-    ink::geometry_rect
-    ink::geometry_segment
-    ink::geometry_triangle
-    ink::geometry_internal::algorithms
-    ink::geometry_internal::intersects_internal
-    ink::geometry_internal::mesh_packing
-    ink::geometry_internal::static_rtree
-    absl::core_headers
-
-    absl::flat_hash_map
-    absl::inlined_vector
-    absl::function_ref
-    absl::check
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::synchronization
-    absl::span
+        PUBLIC
+        ink::geometry_affine_transform
+        ink::geometry_envelope
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_mesh_index_types
+        ink::geometry_mesh_packing_types
+        ink::geometry_mutable_mesh
+        ink::geometry_point
+        ink::geometry_quad
+        ink::geometry_rect
+        ink::geometry_segment
+        ink::geometry_triangle
+        ink::geometry_internal::algorithms
+        ink::geometry_internal::intersects_internal
+        ink::geometry_internal::mesh_packing
+        ink::geometry_internal::static_rtree
+        absl::core_headers
+        absl::nullability
+        absl::flat_hash_map
+        absl::inlined_vector
+        absl::function_ref
+        absl::check
+        absl::status
+        absl::status_macros
+        absl::statusor
+        absl::strings
+        absl::synchronization
+        absl::span
 )
 add_library(ink::geometry_partitioned_mesh ALIAS ink_geometry_partitioned_mesh)
 
 ## convex_hull
 add_library(ink_geometry_convex_hull INTERFACE)
 target_link_libraries(ink_geometry_convex_hull INTERFACE
-  ink::geometry_point
-  ink::geometry_internal::convex_hull_helper
-  ink::geometry_internal::point_tessellation_helper
-  absl::span
+        ink::geometry_point
+        ink::geometry_internal::convex_hull_helper
+        ink::geometry_internal::point_tessellation_helper
+        absl::span
 )
 add_library(ink::geometry_convex_hull ALIAS ink_geometry_convex_hull)
 
 ## tessellator
 add_library(ink_geometry_tessellator STATIC
-  tessellator.cc tessellator.h
+        tessellator.cc tessellator.h
 )
 target_link_libraries(ink_geometry_tessellator
-  PUBLIC
-    ink::geometry_mesh
-    ink::geometry_mesh_format
-    ink::geometry_point
-    ink::geometry_internal::generic_tessellator
-    ink::geometry_internal::point_tessellation_helper
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_point
+        ink::geometry_internal::generic_tessellator
+        ink::geometry_internal::point_tessellation_helper
+        absl::status
+        absl::statusor
+        absl::strings
+        absl::span
 )
 add_library(ink::geometry_tessellator ALIAS ink_geometry_tessellator)
 

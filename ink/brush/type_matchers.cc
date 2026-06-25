@@ -53,6 +53,28 @@ MATCHER_P(OpacityMultiplierParametersEqMatcher, expected, "") {
       arg, result_listener);
 }
 
+MATCHER_P(HueOffsetParametersEqMatcher, expected, "") {
+  return ExplainMatchResult(
+      AllOf(Field("offset", &ColorFunction::HueOffset::offset,
+                  AngleEq(expected.offset))),
+      arg, result_listener);
+}
+
+MATCHER_P(SaturationMultiplierParametersEqMatcher, expected, "") {
+  return ExplainMatchResult(
+      AllOf(Field("multiplier",
+                  &ColorFunction::SaturationMultiplier::multiplier,
+                  FloatEq(expected.multiplier))),
+      arg, result_listener);
+}
+
+MATCHER_P(LuminosityOffsetParametersEqMatcher, expected, "") {
+  return ExplainMatchResult(
+      AllOf(Field("offset", &ColorFunction::LuminosityOffset::offset,
+                  FloatEq(expected.offset))),
+      arg, result_listener);
+}
+
 MATCHER_P(ReplaceColorParametersEqMatcher, expected, "") {
   return ExplainMatchResult(
       AllOf(Field("color", &ColorFunction::ReplaceColor::color,
@@ -64,6 +86,24 @@ MATCHER_P(ReplaceColorParametersEqMatcher, expected, "") {
     ColorFunction::OpacityMultiplier opacity) {
   return VariantWith<ColorFunction::OpacityMultiplier>(
       OpacityMultiplierParametersEqMatcher(opacity));
+}
+
+[[maybe_unused]] Matcher<ColorFunction::Parameters> ColorFunctionParametersEq(
+    ColorFunction::HueOffset hue) {
+  return VariantWith<ColorFunction::HueOffset>(
+      HueOffsetParametersEqMatcher(hue));
+}
+
+[[maybe_unused]] Matcher<ColorFunction::Parameters> ColorFunctionParametersEq(
+    ColorFunction::SaturationMultiplier saturation) {
+  return VariantWith<ColorFunction::SaturationMultiplier>(
+      SaturationMultiplierParametersEqMatcher(saturation));
+}
+
+[[maybe_unused]] Matcher<ColorFunction::Parameters> ColorFunctionParametersEq(
+    ColorFunction::LuminosityOffset luminosity) {
+  return VariantWith<ColorFunction::LuminosityOffset>(
+      LuminosityOffsetParametersEqMatcher(luminosity));
 }
 
 [[maybe_unused]] Matcher<ColorFunction::Parameters> ColorFunctionParametersEq(
@@ -309,24 +349,42 @@ MATCHER(BrushTipPointwiseEqMatcher, "") {
                             result_listener);
 }
 
-MATCHER_P(BrushPaintTextureLayerEqMatcher, expected,
-          absl::StrCat(negation ? "doesn't equal" : "equals",
-                       " BrushPaintTextureLayer (expected: ",
-                       ::testing::PrintToString(expected), ")")) {
-  return ExplainMatchResult(
-      AllOf(Field(&BrushPaint::TextureLayer::client_texture_id,
-                  Eq(expected.client_texture_id)),
-            Field(&BrushPaint::TextureLayer::mapping, Eq(expected.mapping)),
-            Field(&BrushPaint::TextureLayer::origin, Eq(expected.origin)),
-            Field(&BrushPaint::TextureLayer::size_unit, Eq(expected.size_unit)),
-            Field(&BrushPaint::TextureLayer::wrap_x, Eq(expected.wrap_x)),
-            Field(&BrushPaint::TextureLayer::wrap_y, Eq(expected.wrap_y)),
-            Field(&BrushPaint::TextureLayer::size, Eq(expected.size)),
-            Field(&BrushPaint::TextureLayer::offset, Eq(expected.offset)),
-            Field(&BrushPaint::TextureLayer::rotation, Eq(expected.rotation)),
-            Field(&BrushPaint::TextureLayer::blend_mode,
-                  Eq(expected.blend_mode))),
-      arg, result_listener);
+Matcher<BrushPaint::TextureLayer> BrushPaintTextureLayerEqMatcher(
+    const BrushPaint::TilingTexture& expected) {
+  return VariantWith<BrushPaint::TilingTexture>(AllOf(
+      Field("client_texture_id", &BrushPaint::TilingTexture::client_texture_id,
+            Eq(expected.client_texture_id)),
+      Field("origin", &BrushPaint::TilingTexture::origin, Eq(expected.origin)),
+      Field("size_unit", &BrushPaint::TilingTexture::size_unit,
+            Eq(expected.size_unit)),
+      Field("wrap_x", &BrushPaint::TilingTexture::wrap_x, Eq(expected.wrap_x)),
+      Field("wrap_y", &BrushPaint::TilingTexture::wrap_y, Eq(expected.wrap_y)),
+      Field("size", &BrushPaint::TilingTexture::size, Eq(expected.size)),
+      Field("offset", &BrushPaint::TilingTexture::offset, Eq(expected.offset)),
+      Field("rotation", &BrushPaint::TilingTexture::rotation,
+            Eq(expected.rotation)),
+      Field("blend_mode", &BrushPaint::TilingTexture::blend_mode,
+            Eq(expected.blend_mode))));
+}
+
+Matcher<BrushPaint::TextureLayer> BrushPaintTextureLayerEqMatcher(
+    const BrushPaint::StampingTexture& expected) {
+  return VariantWith<BrushPaint::StampingTexture>(AllOf(
+      Field("client_texture_id",
+            &BrushPaint::StampingTexture::client_texture_id,
+            Eq(expected.client_texture_id)),
+      Field("animation_frames", &BrushPaint::StampingTexture::animation_frames,
+            Eq(expected.animation_frames)),
+      Field("animation_rows", &BrushPaint::StampingTexture::animation_rows,
+            Eq(expected.animation_rows)),
+      Field("animation_columns",
+            &BrushPaint::StampingTexture::animation_columns,
+            Eq(expected.animation_columns)),
+      Field("animation_duration",
+            &BrushPaint::StampingTexture::animation_duration,
+            Eq(expected.animation_duration)),
+      Field("blend_mode", &BrushPaint::StampingTexture::blend_mode,
+            Eq(expected.blend_mode))));
 }
 
 MATCHER(BrushPaintTextureLayerPointwiseEqMatcher, "") {
@@ -460,7 +518,11 @@ Matcher<std::tuple<BrushPaint, BrushPaint>> BrushPaintEq() {
 
 Matcher<BrushPaint::TextureLayer> BrushPaintTextureLayerEq(
     const BrushPaint::TextureLayer& expected) {
-  return BrushPaintTextureLayerEqMatcher(expected);
+  return std::visit(
+      [](const auto& expected) {
+        return BrushPaintTextureLayerEqMatcher(expected);
+      },
+      expected);
 }
 
 Matcher<std::tuple<BrushPaint::TextureLayer, BrushPaint::TextureLayer>>

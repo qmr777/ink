@@ -21,6 +21,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/hash/hash_testing.h"
 #include "absl/log/absl_check.h"
 #include "absl/status/status.h"
 #include "absl/status/status_matchers.h"
@@ -28,6 +29,7 @@
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "ink/brush/brush_behavior.h"
+#include "ink/brush/brush_coat.h"
 #include "ink/brush/brush_family.h"
 #include "ink/brush/brush_paint.h"
 #include "ink/brush/brush_tip.h"
@@ -74,27 +76,83 @@ BrushFamily CreateTestFamily() {
               },
           }}},
       },
-      {.texture_layers = {{.client_texture_id = std::string(kTestTextureId),
-                           .mapping = BrushPaint::TextureMapping::kStamping,
-                           .size_unit = BrushPaint::TextureSizeUnit::kBrushSize,
-                           .size = {3, 5},
-                           .blend_mode = BrushPaint::BlendMode::kDstIn}}},
+      {.texture_layers = {BrushPaint::StampingTexture{
+           .client_texture_id = std::string(kTestTextureId),
+           .blend_mode = BrushPaint::BlendMode::kDstIn,
+       }}},
       BrushFamily::DefaultInputModel(),
       {.client_brush_family_id = "/brush-family:test-family"});
   ABSL_CHECK_OK(family);
   return *family;
 }
 
+TEST(BrushTest, Equality) {
+  absl::StatusOr<Brush> brush1 =
+      Brush::Create(CreateTestFamily(), Color::Black(), 1, 1);
+  ASSERT_THAT(brush1, IsOk());
+  absl::StatusOr<Brush> brush2 =
+      Brush::Create(CreateTestFamily(), Color::Black(), 1, 1);
+  ASSERT_THAT(brush2, IsOk());
+  EXPECT_EQ(*brush1, *brush2);
+
+  absl::StatusOr<BrushFamily> family2 = BrushFamily::Create(
+      {BrushCoat{.tip = {.pinch = 0.5f}}}, BrushFamily::DefaultInputModel(),
+      {.client_brush_family_id = "f2"});
+  ASSERT_THAT(family2, IsOk());
+  brush2->SetFamily(*family2);
+  EXPECT_NE(*brush1, *brush2);
+  brush1->SetFamily(*family2);
+  EXPECT_EQ(*brush1, *brush2);
+
+  brush2->SetColor(Color::Blue());
+  EXPECT_NE(*brush1, *brush2);
+  brush1->SetColor(Color::Blue());
+  EXPECT_EQ(*brush1, *brush2);
+
+  EXPECT_THAT(brush2->SetSize(2), IsOk());
+  EXPECT_NE(*brush1, *brush2);
+  EXPECT_THAT(brush1->SetSize(2), IsOk());
+  EXPECT_EQ(*brush1, *brush2);
+
+  EXPECT_THAT(brush2->SetEpsilon(0.5), IsOk());
+  EXPECT_NE(*brush1, *brush2);
+  EXPECT_THAT(brush1->SetEpsilon(0.5), IsOk());
+  EXPECT_EQ(*brush1, *brush2);
+}
+
+TEST(BrushTest, AbslHash) {
+  absl::StatusOr<BrushFamily> family1 = BrushFamily::Create(
+      {BrushCoat{.tip = {.pinch = 0.1f}}}, BrushFamily::DefaultInputModel(),
+      {.client_brush_family_id = "f1"});
+  ASSERT_THAT(family1, IsOk());
+  absl::StatusOr<BrushFamily> family2 = BrushFamily::Create(
+      {BrushCoat{.tip = {.pinch = 0.2f}}}, BrushFamily::DefaultInputModel(),
+      {.client_brush_family_id = "f2"});
+  ASSERT_THAT(family2, IsOk());
+
+  absl::StatusOr<Brush> brush_default =
+      Brush::Create(BrushFamily{}, Color::Black(), 1, 1);
+  ASSERT_THAT(brush_default, IsOk());
+  absl::StatusOr<Brush> brush1 = Brush::Create(*family1, Color::Red(), 2, 0.2);
+  ASSERT_THAT(brush1, IsOk());
+  absl::StatusOr<Brush> brush2 =
+      Brush::Create(*family2, Color::Green(), 3, 0.3);
+  ASSERT_THAT(brush2, IsOk());
+  absl::StatusOr<Brush> brush3 = Brush::Create(*family1, Color::Blue(), 4, 0.4);
+  ASSERT_THAT(brush3, IsOk());
+
+  EXPECT_TRUE(absl::VerifyTypeImplementsAbslHashCorrectly(
+      {*brush_default, *brush1, *brush2, *brush3}));
+}
+
 TEST(BrushTest, Stringify) {
-  absl::StatusOr<BrushFamily> family = BrushFamily::Create(
-      BrushTip{.scale = {3, 3}, .corner_rounding = 0},
-      {.texture_layers = {{.client_texture_id = std::string(kTestTextureId),
-                           .mapping = BrushPaint::TextureMapping::kStamping,
-                           .size_unit = BrushPaint::TextureSizeUnit::kBrushSize,
-                           .size = {3, 5},
-                           .blend_mode = BrushPaint::BlendMode::kDstOut}}},
-      BrushFamily::PassthroughModel{},
-      {.client_brush_family_id = "big-square"});
+  absl::StatusOr<BrushFamily> family =
+      BrushFamily::Create(BrushTip{.scale = {3, 3}, .corner_rounding = 0},
+                          {.texture_layers = {BrushPaint::StampingTexture{
+                               .client_texture_id = std::string(kTestTextureId),
+                               .blend_mode = BrushPaint::BlendMode::kDstOut}}},
+                          BrushFamily::PassthroughModel{},
+                          {.client_brush_family_id = "big-square"});
   ASSERT_THAT(family, IsOk());
   absl::StatusOr<Brush> brush = Brush::Create(*family, Color::Blue(), 3, .1);
   ASSERT_THAT(brush, IsOk());
@@ -104,12 +162,9 @@ TEST(BrushTest, Stringify) {
       "size=3, epsilon=0.1, "
       "family=BrushFamily(coats=[BrushCoat{tip=BrushTip{scale=<3, 3>, "
       "corner_rounding=0}, "
-      "paint_preferences={BrushPaint{texture_layers={TextureLayer{client_"
-      "texture_id=test-texture, mapping=kStamping, "
-      "origin=kStrokeSpaceOrigin, size_unit=kBrushSize, wrap_x=kRepeat, "
-      "wrap_y=kRepeat, size=<3, 5>, offset=<0, 0>, rotation=0π, "
-      "animation_frames=1, animation_rows=1, animation_columns=1, "
-      "animation_duration=1s, blend_mode=kDstOut}}, "
+      "paint_preferences={BrushPaint{texture_layers={StampingTexture{client_"
+      "texture_id=test-texture, animation_frames=1, animation_rows=1, "
+      "animation_columns=1, animation_duration=1s, blend_mode=kDstOut}}, "
       "self_overlap=kAny}}}], input_model=PassthroughModel, "
       "client_brush_family_id='big-square'))");
 }
@@ -212,11 +267,9 @@ TEST(BrushTest, SetNewFamily) {
 
   auto new_family = BrushFamily::Create(
       BrushTip{},
-      {.texture_layers = {{.client_texture_id = std::string(kTestTextureId),
-                           .mapping = BrushPaint::TextureMapping::kStamping,
-                           .size_unit = BrushPaint::TextureSizeUnit::kBrushSize,
-                           .size = {3, 5},
-                           .blend_mode = BrushPaint::BlendMode::kDstIn}}},
+      {.texture_layers = {BrushPaint::StampingTexture{
+           .client_texture_id = std::string(kTestTextureId),
+           .blend_mode = BrushPaint::BlendMode::kDstIn}}},
       BrushFamily::DefaultInputModel(),
       {.client_brush_family_id = "/brush-family:new-test-family"});
   ASSERT_THAT(new_family, IsOk());
