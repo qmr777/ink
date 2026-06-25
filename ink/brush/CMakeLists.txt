@@ -4,135 +4,159 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------- 测试开关 -----------------------------------
 # 沿用顶层选项
-if(NOT DEFINED INK_BUILD_TESTS)
-  set(INK_BUILD_TESTS ON)
-endif()
+if (NOT DEFINED INK_BUILD_TESTS)
+    set(INK_BUILD_TESTS ON)
+endif ()
 
 # ------------------------- 通用宏 ------------------------------------
 # 测试专用库（testonly = 1 等价）
 function(ink_testonly_lib name)
-  add_library(${name} STATIC ${ARGN})
-  target_compile_definitions(${name} PRIVATE BRUSH_TESTONLY)
-  set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL ON)
+    add_library(${name} STATIC ${ARGN})
+    target_compile_definitions(${name} PRIVATE BRUSH_TESTONLY)
+    set_target_properties(${name} PROPERTIES EXCLUDE_FROM_ALL ON)
 endfunction()
 
 # ------------------------- 1. 基础库 -------------------------------
 # brush_tip
 add_library(ink_brush_tip STATIC
-  brush_tip.cc
-  brush_tip.h
+        brush_tip.cc
+        brush_tip.h
 )
 target_link_libraries(ink_brush_tip
-  PUBLIC
-    ink::brush_behavior
-    ink::geometry_angle
-    ink::geometry_mesh_format
-    ink::geometry_vec
-    ink::types_duration
-    absl::core_headers
-    absl::flat_hash_set
-    absl::status
-    absl::strings
-    absl::str_format
+        PUBLIC
+        ink::brush_behavior
+        ink_brush_version
+        ink::geometry_angle
+        ink::geometry_mesh_format
+        ink::geometry_vec
+        ink::types_duration
+        absl::flat_hash_set
+        absl::status
+        absl::status_macros
+        absl::strings
+        absl::str_format
 )
 add_library(ink::brush_tip ALIAS ink_brush_tip)
 target_include_directories(ink_brush_tip PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
+add_library(ink_brush_version STATIC
+        version.h
+)
+target_link_libraries(ink_brush_version PUBLIC
+        absl::check
+        absl::strings
+)
+
 # easing_function
 add_library(ink_easing_function STATIC
-  easing_function.cc
-  easing_function.h
+        easing_function.cc
+        easing_function.h
 )
 target_link_libraries(ink_easing_function
-  PUBLIC
-    ink::geometry_point
-    absl::status
-    absl::strings
-    absl::str_format
+        PUBLIC
+        ink_brush_version
+        ink::geometry_point
+        absl::status
+        absl::strings
+        absl::str_format
 )
 add_library(ink::easing_function ALIAS ink_easing_function)
 
 # brush_behavior
 add_library(ink_brush_behavior STATIC
-  brush_behavior.cc
-  brush_behavior.h
+        brush_behavior.cc
+        brush_behavior.h
 )
 target_link_libraries(ink_brush_behavior
-  PUBLIC
-    ink::easing_function
-    absl::status
-    absl::strings
-    absl::str_format
+        PUBLIC
+        ink::easing_function
+        ink_brush_version
+        absl::status
+        absl::status_macros
+        absl::strings
+        absl::str_format
 )
 add_library(ink::brush_behavior ALIAS ink_brush_behavior)
 
 # color_function
 add_library(ink_color_function STATIC
-  color_function.cc
-  color_function.h
+        color_function.cc
+        color_function.h
 )
 target_link_libraries(ink_color_function
-  PUBLIC
-    ink::color   # 来自 ink/color/
-    absl::status
-    absl::strings
-    absl::span
+        PUBLIC
+        ink_brush_version
+        ink::color
+        ink::color_space
+        ink::geometry_affine_transform
+        ink::geometry_angle
+        ink::geometry_point
+        absl::status
+        absl::strings
+        absl::span
 )
 add_library(ink::color_function ALIAS ink_color_function)
 
 # brush_paint
 add_library(ink_brush_paint STATIC
-  brush_paint.cc
-  brush_paint.h
+        brush_paint.cc
+        brush_paint.h
 )
 target_link_libraries(ink_brush_paint
-  PUBLIC
-    ink::color_function
-    ink::geometry_angle
-    ink::geometry_mesh_format
-    ink::geometry_vec
-    absl::flat_hash_set
-    absl::status
-    absl::strings
-    absl::str_format
-    absl::time
+        PUBLIC
+        ink::color_function
+        ink_brush_version
+        ink::geometry_angle
+        ink::geometry_mesh_format
+        ink::geometry_vec
+        absl::flat_hash_set
+        absl::overload
+        absl::status
+        absl::status_macros
+        absl::strings
+        absl::str_format
+        absl::time
 )
 add_library(ink::brush_paint ALIAS ink_brush_paint)
 
 # brush_coat
 add_library(ink_brush_coat STATIC
-  brush_coat.cc
-  brush_coat.h
+        brush_coat.cc
+        brush_coat.h
 )
 target_link_libraries(ink_brush_coat
-  PUBLIC
-    ink::brush_behavior
-    ink::brush_paint
-    ink::brush_tip
-    ink::geometry_mesh_format
-    absl::flat_hash_set
-    absl::inlined_vector
-    absl::status
-    absl::strings
-    absl::str_format
+        PUBLIC
+        ink::brush_paint
+        ink::brush_tip
+        ink_brush_version
+        ink::geometry_mesh_format
+        absl::flat_hash_set
+        absl::inlined_vector
+        absl::status
+        absl::status_macros
+        absl::strings
+        absl::str_format
 )
 add_library(ink::brush_coat ALIAS ink_brush_coat)
 
 # brush_family
 add_library(ink_brush_family STATIC
-  brush_family.cc
-  brush_family.h
+        brush_family.cc
+        brush_family.h
 )
 target_link_libraries(ink_brush_family
-  PUBLIC
-    ink::brush_coat
-    ink::brush_paint
-    ink::brush_tip
-    ink::types_duration
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::brush_coat
+        ink::brush_paint
+        ink::brush_tip
+        ink_brush_version
+        ink::types_duration
+        absl::status
+        absl::status_macros
+        absl::statusor
+        absl::strings
+        absl::time
+        absl::span
 )
 add_library(ink::brush_family ALIAS ink_brush_family)
 
@@ -151,24 +175,25 @@ target_link_libraries(ink_stock_brushes
         ink::geometry_angle
         absl::check
         absl::statusor
-        absl::strings
+        absl::string_view
 )
 add_library(ink::stock_brushes ALIAS ink_stock_brushes)
 
 # brush（最外层聚合库）
 add_library(ink_brush STATIC
-  brush.cc
-  brush.h
+        brush.cc
+        brush.h
 )
 target_link_libraries(ink_brush
-  PUBLIC
-    ink::brush_coat
-    ink::brush_family
-    ink::color
-    absl::status
-    absl::statusor
-    absl::strings
-    absl::span
+        PUBLIC
+        ink::brush_coat
+        ink::brush_family
+        ink::color
+        absl::status
+        absl::status_macros
+        absl::statusor
+        absl::strings
+        absl::span
 )
 add_library(ink::brush ALIAS ink_brush)
 

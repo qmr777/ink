@@ -23,14 +23,14 @@ endfunction()
 ## numbers（头文件 only）
 add_library(ink_types_numbers INTERFACE numbers.h)
 target_include_directories(ink_types_numbers INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  numbers.h
 )
 add_library(ink::types_numbers ALIAS ink_types_numbers)
 
 ## iterator_range（头文件 only）
 add_library(ink_types_iterator_range INTERFACE iterator_range.h)
 target_include_directories(ink_types_iterator_range INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  iterator_range.h
 )
 add_library(ink::types_iterator_range ALIAS ink_types_iterator_range)
 
