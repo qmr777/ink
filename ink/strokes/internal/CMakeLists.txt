@@ -380,15 +380,43 @@ target_link_libraries(ink_stroke_internal_stroke_subtraction
         PUBLIC
         ink_strokes_internal_stroke_vertex
         ink_geometry_affine_transform
-        ink_geometry_intersects
+        ink::geometry_envelope
         ink_geometry_mesh
         ink_geometry_mesh_format
         ink_geometry_mutable_mesh
         ink_geometry_partitioned_mesh
+        ink::geometry_point
+        ink::geometry_triangle
+        ink::geometry_vec
+        ink::geometry_internal::outline_processing
+        ink::types_small_array
+        absl::flat_hash_map
+        absl::inlined_vector
+        absl::check
         absl::status
         absl::statusor
+        absl::span
 )
 add_library(ink::strokes::internal::stroke_subtraction ALIAS ink_stroke_internal_stroke_subtraction)
+
+add_library(ink_stroke_internal_stroke_segmentation STATIC
+        stroke_segmentation.cc stroke_segmentation.h
+)
+target_link_libraries(ink_stroke_internal_stroke_segmentation
+        PUBLIC
+        ink::strokes::internal::stroke_vertex
+        ink::geometry_affine_transform
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_mutable_mesh
+        ink::geometry_partitioned_mesh
+        ink::geometry_point
+        absl::algorithm_container
+        absl::status
+        absl::statusor
+        absl::span
+)
+add_library(ink::strokes::internal::stroke_segmentation ALIAS ink_stroke_internal_stroke_segmentation)
 
 # ------------------------------------------------------------------ 测试专用库
 #if(INK_BUILD_TESTS)
