@@ -34,6 +34,7 @@ target_link_libraries(ink_strokes_stroke
         ink::geometry_partitioned_mesh
         ink::strokes::input::stroke_input_batch
         ink::strokes::internal::stroke_input_modeler
+        ink::strokes::internal::stroke_segmentation
         ink::strokes::internal::stroke_shape_builder
         ink::strokes::internal::stroke_subtraction
         ink::strokes::internal::stroke_vertex

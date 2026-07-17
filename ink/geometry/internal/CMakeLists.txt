@@ -233,6 +233,25 @@ target_link_libraries(
 )
 add_library(ink::geometry_internal::lerp ALIAS ink_geometry_internal_lerp)
 
+## outline_processing
+add_library(ink_geometry_internal_outline_processing STATIC
+  outline_processing.cc outline_processing.h
+)
+target_link_libraries(ink_geometry_internal_outline_processing
+  PUBLIC
+    ink::geometry_internal::algorithms
+    ink::geometry_internal::intersects_internal
+    ink::geometry_point
+    ink::geometry_rect
+    ink::geometry_segment
+    ink::geometry_vec
+    absl::algorithm_container
+    absl::flat_hash_map
+    absl::inlined_vector
+    absl::span
+)
+add_library(ink::geometry_internal::outline_processing ALIAS ink_geometry_internal_outline_processing)
+
 # ------------------------------------------------------------------ 测试
 #if(INK_BUILD_TESTS)
 #  enable_testing()

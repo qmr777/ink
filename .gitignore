@@ -9,3 +9,4 @@ MODULE.bazel.lock
 **/.cmake
 **/cmake-build-debug
 CLAUDE.md
+/todo.md
