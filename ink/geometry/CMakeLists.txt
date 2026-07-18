@@ -297,6 +297,7 @@ target_link_libraries(ink_geometry_partitioned_mesh
         ink::geometry_mutable_mesh
         ink::geometry_point
         ink::geometry_quad
+        absl::span
         ink::geometry_rect
         ink::geometry_segment
         ink::geometry_triangle

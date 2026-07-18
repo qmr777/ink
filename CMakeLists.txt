@@ -42,9 +42,14 @@ ink_fetch_git(abseil-cpp
         20260526.0
 )
 
+# 获取 abseil 构建目录，供 protobuf 的 find_package(absl CONFIG) 使用
+FetchContent_GetProperties(abseil-cpp)
+if (abseil-cpp_POPULATED)
+    set(absl_DIR "${abseil-cpp_BINARY_DIR}" CACHE PATH "" FORCE)
+endif ()
+
 ink_fetch_git(ink_stroke_modeler
         https://github.com/google/ink-stroke-modeler.git
-        #  2cd45e8683025c28fa2efcf672ad46607e8af869   # 2025-08-28
         e254fa1ea4644070ab760fc5f0f6cc9ac6a4f40c #20260520
 )
 FetchContent_GetProperties(ink_stroke_modeler)
@@ -53,16 +58,26 @@ if (NOT ink_stroke_modeler_POPULATED)
 endif ()
 include_directories(${ink_stroke_modeler_SOURCE_DIR})
 
-#ink_fetch_git(libtess2
-#  https://github.com/memononen/libtess2.git
-#  9a450cc9e5b4b79c36b89648f8b92fe65b6dd407   # 2025-04-26
-#)
-
 # libtess2不支持CMake，换一个别人fork过的
 ink_fetch_git(libtess2
         https://github.com/mlogic1/libtess2.git
         3d2fdd08da550daca02f0638bd6fd93618d9d32b   # 2025-04-26
 )
+
+# protobuf（storage 模块依赖，需要 abseil 已就绪）
+# 使用 protobuf_ABSL_PROVIDER=package 让 protobuf 通过 find_package(absl CONFIG)
+# 查找已构建的 abseil，避免重复 add_subdirectory 导致目标冲突。
+set(protobuf_ABSL_PROVIDER "package" CACHE STRING "" FORCE)
+set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(protobuf_WITH_ZLIB OFF CACHE BOOL "" FORCE)
+set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(protobuf
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG        v33.5
+        GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(protobuf)
 
 # ------------------------------------------------------------------ 测试/基准依赖（仅当需要）
 if (INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
@@ -111,12 +126,14 @@ add_subdirectory(ink/color)
 add_subdirectory(ink/geometry)
 add_subdirectory(ink/brush)
 add_subdirectory(ink/strokes)
+add_subdirectory(ink/storage)
 # 后续可以继续 add_subdirectory(stroke) / add_subdirectory(geometry) ...
 
 # ---------------------------------------------------------------------------
 #  统一导出目标 —— 对外只暴露 ink::ink
 # ---------------------------------------------------------------------------
 add_library(ink INTERFACE)
+add_library(ink::ink ALIAS ink)
 
 # 1. 把头文件根目录甩出去
 target_include_directories(ink INTERFACE
@@ -170,7 +187,6 @@ target_link_libraries(ink INTERFACE
         ink::geometry_internal::generic_tessellator
         ink::geometry_internal::polyline_processing
 
-
         ink::strokes::in_progress_stroke
         ink::strokes::stroke
 
@@ -186,6 +202,34 @@ target_link_libraries(ink INTERFACE
         ink::strokes::input::stroke_input
         ink::strokes::input::stroke_input_batch
         ink::strokes::input::internal::stroke_input_validation_helpers
+
+        ink::storage::numeric_run
+        ink::storage::color
+        ink::storage::mesh_format
+        ink::storage::mesh
+        ink::storage::mesh_vertices
+        ink::storage::partitioned_mesh
+        ink::storage::input_batch
+        ink::storage::stroke_input_batch
+        ink::storage::brush
+
+        ink::storage::proto::options_cc_proto
+        ink::storage::proto::color_cc_proto
+        ink::storage::proto::coded_numeric_run_cc_proto
+        ink::storage::proto::brush_family_cc_proto
+        ink::storage::proto::brush_cc_proto
+        ink::storage::proto::stroke_input_batch_cc_proto
+        ink::storage::proto::incremental_stroke_inputs_cc_proto
+        ink::storage::proto::mesh_cc_proto
+
+        # absl
+        absl::check
+        absl::statusor
+
+        # 显式声明 protobuf 运行时作为兜底，避免下游在自己项目中
+        # 显式使用 google::protobuf::... 符号时找不到。
+        # 已有 PUBLIC 链会传递，但显式写出更清晰、更不易被 visibility 裁剪。
+#        protobuf::libprotobuf
 )
 
 # 禁止 re2 安装导出，避免 CMP0002 报错
