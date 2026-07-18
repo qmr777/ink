@@ -8,5 +8,8 @@ MODULE.bazel.lock
 **/.idea
 **/.cmake
 **/cmake-build-debug
+**/cmake-build-debug2
+**/cmake-build-debug2_deps
 CLAUDE.md
+tools
 /todo.md

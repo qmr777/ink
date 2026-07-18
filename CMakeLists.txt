@@ -42,9 +42,14 @@ ink_fetch_git(abseil-cpp
         20260526.0
 )
 
+# 获取 abseil 构建目录，供 protobuf 的 find_package(absl CONFIG) 使用
+FetchContent_GetProperties(abseil-cpp)
+if (abseil-cpp_POPULATED)
+    set(absl_DIR "${abseil-cpp_BINARY_DIR}" CACHE PATH "" FORCE)
+endif ()
+
 ink_fetch_git(ink_stroke_modeler
         https://github.com/google/ink-stroke-modeler.git
-        #  2cd45e8683025c28fa2efcf672ad46607e8af869   # 2025-08-28
         e254fa1ea4644070ab760fc5f0f6cc9ac6a4f40c #20260520
 )
 FetchContent_GetProperties(ink_stroke_modeler)
@@ -53,16 +58,26 @@ if (NOT ink_stroke_modeler_POPULATED)
 endif ()
 include_directories(${ink_stroke_modeler_SOURCE_DIR})
 
-#ink_fetch_git(libtess2
-#  https://github.com/memononen/libtess2.git
-#  9a450cc9e5b4b79c36b89648f8b92fe65b6dd407   # 2025-04-26
-#)
-
 # libtess2不支持CMake，换一个别人fork过的
 ink_fetch_git(libtess2
         https://github.com/mlogic1/libtess2.git
         3d2fdd08da550daca02f0638bd6fd93618d9d32b   # 2025-04-26
 )
+
+# protobuf（storage 模块依赖，需要 abseil 已就绪）
+# 使用 protobuf_ABSL_PROVIDER=package 让 protobuf 通过 find_package(absl CONFIG)
+# 查找已构建的 abseil，避免重复 add_subdirectory 导致目标冲突。
+set(protobuf_ABSL_PROVIDER "package" CACHE STRING "" FORCE)
+set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(protobuf_WITH_ZLIB OFF CACHE BOOL "" FORCE)
+set(protobuf_INSTALL OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(protobuf
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG        v33.5
+        GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(protobuf)
 
 # ------------------------------------------------------------------ 测试/基准依赖（仅当需要）
 if (INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
@@ -111,6 +126,7 @@ add_subdirectory(ink/color)
 add_subdirectory(ink/geometry)
 add_subdirectory(ink/brush)
 add_subdirectory(ink/strokes)
+add_subdirectory(ink/storage)
 # 后续可以继续 add_subdirectory(stroke) / add_subdirectory(geometry) ...
 
 # ---------------------------------------------------------------------------
@@ -188,6 +204,3 @@ target_link_libraries(ink INTERFACE
         ink::strokes::input::internal::stroke_input_validation_helpers
 )
 
-# 禁止 re2 安装导出，避免 CMP0002 报错
-set(RE2_BUILD_TESTING OFF CACHE BOOL "" FORCE)
-set(INSTALL_RE2 OFF CACHE BOOL "" FORCE)

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+project(ink_brush LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -39,13 +40,12 @@ target_link_libraries(ink_brush_tip
 add_library(ink::brush_tip ALIAS ink_brush_tip)
 target_include_directories(ink_brush_tip PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
-add_library(ink_brush_version STATIC
-        version.h
-)
-target_link_libraries(ink_brush_version PUBLIC
+add_library(ink_brush_version INTERFACE)
+target_link_libraries(ink_brush_version INTERFACE
         absl::check
         absl::strings
 )
+target_include_directories(ink_brush_version INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # easing_function
 add_library(ink_easing_function STATIC
@@ -196,6 +196,10 @@ target_link_libraries(ink_brush
         absl::span
 )
 add_library(ink::brush ALIAS ink_brush)
+
+add_library(ink_brush_family_internal_accessor INTERFACE
+        internal/brush_family_internal_accessor.h)
+add_library(ink::brush_family_internal_accessor ALIAS ink_brush_family_internal_accessor)
 
 # ------------------------- 2. 测试专用库 ------------------------------
 #if(INK_BUILD_TESTS)
