@@ -31,6 +31,7 @@ target_link_libraries(ink_strokes_input_stroke_input
     ink::geometry_point
     ink::types_duration
     ink::types_physical_distance
+    ink_brush_version
     absl::strings
 )
 add_library(ink::strokes::input::stroke_input ALIAS ink_strokes_input_stroke_input)

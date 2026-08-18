@@ -80,32 +80,32 @@ FetchContent_Declare(protobuf
 FetchContent_MakeAvailable(protobuf)
 
 # ------------------------------------------------------------------ 测试/基准依赖（仅当需要）
-if (INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
-    ink_fetch_git(googletest
-            https://github.com/google/googletest.git
-            v1.17.0
-    )
-    # 让 GoogleTest 提供 GTest::gtest, GTest::gtest_main, GMock::gmock ...
-endif ()
-
-if (INK_BUILD_BENCHMARKS)
-    ink_fetch_git(google_benchmark
-            https://github.com/google/benchmark.git
-            v1.8.3
-    )
-endif ()
-
-if (INK_BUILD_TESTS)
-    ink_fetch_git(fuzztest
-            https://github.com/google/fuzztest.git
-            2025-02-14
-    )
-    # FuzzTest 依赖 riegeli，提前拉取高版本以规避 Abseil 冲突
-    #  ink_fetch_git(riegeli
-    #    https://github.com/google/riegeli.git
-    #    0.0.0-20250706-c4d1f27
-    #  )
-endif ()
+#if (INK_BUILD_TESTS OR INK_BUILD_BENCHMARKS)
+#    ink_fetch_git(googletest
+#            https://github.com/google/googletest.git
+#            v1.17.0
+#    )
+#    # 让 GoogleTest 提供 GTest::gtest, GTest::gtest_main, GMock::gmock ...
+#endif ()
+#
+#if (INK_BUILD_BENCHMARKS)
+#    ink_fetch_git(google_benchmark
+#            https://github.com/google/benchmark.git
+#            v1.8.3
+#    )
+#endif ()
+#
+#if (INK_BUILD_TESTS)
+#    ink_fetch_git(fuzztest
+#            https://github.com/google/fuzztest.git
+#            2025-02-14
+#    )
+#    # FuzzTest 依赖 riegeli，提前拉取高版本以规避 Abseil 冲突
+#    #  ink_fetch_git(riegeli
+#    #    https://github.com/google/riegeli.git
+#    #    0.0.0-20250706-c4d1f27
+#    #  )
+#endif ()
 
 # ------------------------------------------------------------------ 导出统一目标
 # 现在所有依赖都已生成::目标，例如：
@@ -156,6 +156,7 @@ target_link_libraries(ink INTERFACE
         ink::types_small_array
 
         ink::easing_function
+        ink::stock_brushes
 
         ink::geometry_angle
         ink::geometry_vec

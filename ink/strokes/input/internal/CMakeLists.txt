@@ -21,6 +21,7 @@ target_link_libraries(ink_strokes_input_internal_stroke_input_validation_helpers
     ink::strokes::input::stroke_input   # 来自上层 input/
     ink::types_duration
     absl::status
+    absl::status_macros
     absl::strings
 )
 add_library(ink::strokes::input::internal::stroke_input_validation_helpers

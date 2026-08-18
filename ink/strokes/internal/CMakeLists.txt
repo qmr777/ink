@@ -379,16 +379,17 @@ add_library(ink_stroke_internal_stroke_subtraction STATIC
 target_link_libraries(ink_stroke_internal_stroke_subtraction
         PUBLIC
         ink_strokes_internal_stroke_vertex
-        ink_geometry_affine_transform
+        ink::geometry_affine_transform
         ink::geometry_envelope
-        ink_geometry_mesh
-        ink_geometry_mesh_format
-        ink_geometry_mutable_mesh
-        ink_geometry_partitioned_mesh
+        ink::geometry_mesh
+        ink::geometry_mesh_format
+        ink::geometry_mutable_mesh
+        ink::geometry_partitioned_mesh
         ink::geometry_point
         ink::geometry_triangle
         ink::geometry_vec
         ink::geometry_internal::outline_processing
+        ink::types_numbers
         ink::types_small_array
         absl::flat_hash_map
         absl::inlined_vector
