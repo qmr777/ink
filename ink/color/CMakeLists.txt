@@ -37,7 +37,6 @@ target_include_directories(ink_color_space PUBLIC "$<BUILD_INTERFACE:${CMAKE_CUR
 add_library(ink_color STATIC
         color.cc
         color.h
-        color_helpers.h
 )
 target_link_libraries(ink_color
         PUBLIC

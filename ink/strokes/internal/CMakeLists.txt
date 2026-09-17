@@ -386,11 +386,14 @@ target_link_libraries(ink_stroke_internal_stroke_subtraction
         ink::geometry_mutable_mesh
         ink::geometry_partitioned_mesh
         ink::geometry_point
+        ink::geometry_segment
         ink::geometry_triangle
         ink::geometry_vec
         ink::geometry_internal::outline_processing
+        ink::strokes::internal::brush_tip_extruder::derivative_calculator
         ink::types_numbers
         ink::types_small_array
+        absl::algorithm_container
         absl::flat_hash_map
         absl::inlined_vector
         absl::check

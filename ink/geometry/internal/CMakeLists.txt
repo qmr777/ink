@@ -239,8 +239,8 @@ add_library(ink_geometry_internal_outline_processing STATIC
 )
 target_link_libraries(ink_geometry_internal_outline_processing
   PUBLIC
-    ink::geometry_internal::algorithms
     ink::geometry_internal::intersects_internal
+    ink::geometry_envelope
     ink::geometry_point
     ink::geometry_rect
     ink::geometry_segment
