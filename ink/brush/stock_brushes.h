@@ -74,6 +74,17 @@ enum class PressurePenVersion {
   kLatest = kV1,
 };
 
+/** Version option for the [fountainPen] stock brush factory function. */
+enum class FountainPenVersion {
+  /**
+   * Initial version of a highly pressure- and speed-sensitive brush that
+   * emulates the expressive strokes of a fountain pen.
+   */
+  kV1 = 1,
+  /** The latest version of a highly pressure- and speed-sensitive brush. */
+  kLatest = kV1,
+};
+
 /** Version option for the [highlighter] stock brush factory function. */
 enum class HighlighterVersion {
   /**
@@ -129,6 +140,20 @@ BrushFamily Marker(const MarkerVersion& version = MarkerVersion::kLatest);
  */
 BrushFamily PressurePen(
     const PressurePenVersion& version = PressurePenVersion::kLatest);
+
+/**
+ * Factory function for constructing a highly pressure- and speed-sensitive
+ * brush that emulates the expressive strokes of a fountain pen.
+ *
+ * Compared to [PressurePen], this brush responds more strongly and more
+ * immediately to changes in stylus pressure and drawing speed: pressing down
+ * harder widens the stroke considerably, and drawing faster thins it out.
+ *
+ * @param version The version of the fountain pen brush to use. By default, uses
+ * the latest version.
+ */
+BrushFamily FountainPen(
+    const FountainPenVersion& version = FountainPenVersion::kLatest);
 
 /**
  * Factory function for constructing a chisel-tip brush that is intended for

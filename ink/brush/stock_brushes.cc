@@ -192,6 +192,87 @@ BrushFamily PressurePen(const PressurePenVersion& version) {
                     << static_cast<int>(version);
 }
 
+BrushFamily FountainPen(const FountainPenVersion& version) {
+  switch (version) {
+    case FountainPenVersion::kV1: {
+      BrushBehavior taper_stroke_end_behavior = {
+          .nodes = {SourceNode{
+                        .source =
+                            Source::kDistanceRemainingInMultiplesOfBrushSize,
+                        .source_out_of_range_behavior = OutOfRange::kClamp,
+                        .source_value_range = {3.0f, 0.0f},
+                    },
+                    DampingNode{
+                        .damp_over = ProgressDomain::kTimeInSeconds,
+                        .strength = .01f,
+                    },
+                    TargetNode{.target = Target::kSizeMultiplier,
+                               .target_modifier_range = {1.0f, 0.65f}}},
+          .developer_comment =
+              "Reduces the brush size near the end of the stroke, creating a "
+              "more pronounced taper than the pressure pen."};
+      BrushBehavior speed_to_size_behavior = {
+          .nodes = {SourceNode{
+                        .source = Source::kSpeedInCentimetersPerSecond,
+                        .source_out_of_range_behavior = OutOfRange::kClamp,
+                        .source_value_range = {1.0f, 20.0f},
+                    },
+                    DampingNode{
+                        .damp_over = ProgressDomain::kTimeInSeconds,
+                        .strength = .01f,
+                    },
+                    TargetNode{.target = Target::kSizeMultiplier,
+                               .target_modifier_range = {1.4f, 0.55f}}},
+          .developer_comment =
+              "Strongly thins the stroke as the drawing speed increases, and "
+              "widens it when drawing slowly. A small damping strength keeps "
+              "the response to speed changes immediate."};
+      BrushBehavior stylus_pressure_to_size_behavior = {
+          .nodes = {SourceNode{
+                        .source = Source::kNormalizedPressure,
+                        .source_out_of_range_behavior = OutOfRange::kClamp,
+                        .source_value_range = {0.05f, 0.85f},
+                    },
+                    DampingNode{
+                        .damp_over = ProgressDomain::kTimeInSeconds,
+                        .strength = .008f,
+                    },
+                    ToolTypeFilterNode{
+                        .enabled_tool_types = {.stylus = true},
+                    },
+                    TargetNode{
+                        .target = Target::kSizeMultiplier,
+                        .target_modifier_range = {0.45f, 1.8f},
+                    }},
+          .developer_comment =
+              "Increases the brush size strongly for higher stylus pressure "
+              "values. The wide size range and low damping strength make this "
+              "behavior more sensitive to pressure changes than the pressure "
+              "pen. It is disabled for non-stylus input types, in particular "
+              "for touch inputs, because touch pressure readings tend to be "
+              "inaccurate."};
+      BrushTip tip = {.behaviors = {PredictionFadeOutBehavior(),
+                                    taper_stroke_end_behavior,
+                                    speed_to_size_behavior,
+                                    stylus_pressure_to_size_behavior}};
+      absl::StatusOr<BrushFamily> fountain_pen_v1 = BrushFamily::Create(
+          tip, BrushPaint{}, StockInputModel(),
+          Metadata{
+              .developer_comment =
+                  "A fountain pen brush with strong and immediate sensitivity "
+                  "to both stylus pressure and drawing speed. Pressing harder "
+                  "produces a wider stroke, while drawing faster produces a "
+                  "thinner stroke, emulating the line variation of a fountain "
+                  "pen.",
+          });
+      ABSL_CHECK_OK(fountain_pen_v1);
+      return *fountain_pen_v1;
+    }
+  }
+  ABSL_CHECK(false) << "Unsupported fountain pen version: "
+                    << static_cast<int>(version);
+}
+
 BrushFamily Highlighter(const BrushPaint::SelfOverlap& self_overlap,
                         const HighlighterVersion& version) {
   switch (version) {

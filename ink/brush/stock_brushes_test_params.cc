@@ -12,6 +12,7 @@ std::vector<stock_brushes::StockBrushesTestParam> GetParams() {
   std::vector<StockBrushesTestParam> families = {
       {"marker_1", Marker(MarkerVersion::kV1)},
       {"pressure_pen_1", PressurePen(PressurePenVersion::kV1)},
+      {"fountain_pen_1", FountainPen(FountainPenVersion::kV1)},
       {"highlighter_1",
        Highlighter(BrushPaint::SelfOverlap::kAny, HighlighterVersion::kV1)},
       {"dashed_line_1", DashedLine(DashedLineVersion::kV1)},
